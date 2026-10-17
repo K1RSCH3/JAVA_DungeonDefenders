@@ -1,0 +1,24 @@
+out/
+save.properties
+ashen-save.properties
+ashen-save-backup-*.properties
+settings.properties
+*.lock
+save-*.tmp
+*.class
+
+# keep third-party packs and local art out of the public repository
+/assets/*
+!/assets/README.md
+
+# previews contain artwork from the local packs
+/docs/*.png
+/docs/*.gif
+/docs/*.jpg
+/docs/*.jpeg
+
+# keep asset archives and packaged builds local
+*.zip
+*.7z
+*.rar
+*.jar
