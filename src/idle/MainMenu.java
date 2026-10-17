@@ -173,7 +173,7 @@ public final class MainMenu {
     public static void launch() {
         SaveStore saves = new SaveStore(Paths.get("ashen-save.properties"));
         try {
-            saves.lock(); JFrame window = new JFrame("Dungeon Defenders / Iron & Ash");
+            saves.lock(); JFrame window = new JFrame("Dungeon Defenders");
             MainMenu menu = new MainMenu(window, saves);
             window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE); window.setMinimumSize(new Dimension(1240, 870)); window.setSize(1280, 900); window.setLocationRelativeTo(null);
             window.addWindowListener(new WindowAdapter() { @Override public void windowClosing(WindowEvent e) { menu.quit(); } });

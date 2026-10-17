@@ -11,11 +11,22 @@ save-*.tmp
 /assets/*
 !/assets/README.md
 
-# previews contain artwork from the local packs
+# keep raw galleries and other generated previews local
 /docs/*.png
 /docs/*.gif
 /docs/*.jpg
 /docs/*.jpeg
+
+# include only selected game screenshots for the readme
+/docs/screenshots/*
+!/docs/screenshots/main-menu.png
+!/docs/screenshots/battlefield-party.png
+!/docs/screenshots/gear.png
+!/docs/screenshots/shop.png
+!/docs/screenshots/upgrades.png
+!/docs/screenshots/combat.png
+!/docs/screenshots/regrouping.png
+!/docs/screenshots/boss.png
 
 # keep asset archives and packaged builds local
 *.zip

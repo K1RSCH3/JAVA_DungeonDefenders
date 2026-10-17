@@ -16,11 +16,81 @@ Combat runs automatically. You choose who fights, how they grow, and what they c
 - **Persistent progress** with automatic saving and up to eight hours of offline gold
 - **Recoverable defeats** that retry the current stage without taking away your gold, gear, or progress
 
+## Screenshots
+
+V1 gameplay screenshots, with additional previews of the management tabs. Select an image to view it at full size.
+
+### Main menu
+
+Start a new expedition, continue your campaign, or adjust settings.
+
+![Dungeon Defenders main menu](docs/screenshots/main-menu.png)
+
+### Battlefield and party
+
+Manage a four-member party while battles run automatically. The sidebar keeps your gold, selected hero, and management tabs together.
+
+![Stage 19 victory with the Party tab open and healing effects on the battlefield](docs/screenshots/battlefield-party.png)
+
+<details>
+<summary>Combat and health indicators</summary>
+
+Melee strikes and spells land on their targets, while hearts show each combatant's remaining health.
+
+![Party fighting Blood Monsters with targeted attack effects and heart indicators](docs/screenshots/combat.png)
+
+</details>
+
+<details>
+<summary>Regrouping after defeat</summary>
+
+A defeated party recovers and retries the same stage. Gold, equipment, and progress are preserved, giving you time to strengthen the team.
+
+![Regrouping countdown before retrying stage 21](docs/screenshots/regrouping.png)
+
+</details>
+
+<details>
+<summary>Boss encounters and upgrades</summary>
+
+Every 25 stages introduces a boss. Upgrade individual stats to help the party push further, including stronger priest healing.
+
+![Stage 25 boss Gorath the Iron Warlord with the Priest's Upgrades tab open](docs/screenshots/boss.png)
+
+</details>
+
+<details>
+<summary>Gear tab</summary>
+
+Manage the selected hero's weapon, hat, armor, and shoes. Equip compatible items from the shared stash.
+
+![Gear tab showing equipment slots and equip controls](docs/screenshots/gear.png)
+
+</details>
+
+<details>
+<summary>Shop tab</summary>
+
+Compare equipment prices, stats, and class requirements before spending gold.
+
+![Shop tab showing equipment prices and the buy button](docs/screenshots/shop.png)
+
+</details>
+
+<details>
+<summary>Upgrades tab</summary>
+
+Review current and next stats, then purchase separate damage, vitality, healing, or guard upgrades.
+
+![Upgrades tab showing damage and vitality improvements](docs/screenshots/upgrades.png)
+
+</details>
+
 ## Before you run
 
 You need **JDK 11 or newer** and the required assets installed locally. The game uses standard Java libraries and does not require Maven or Gradle.
 
-**Asset packs are not included in this repository.** The project uses paid character packs, and all third-party artwork, fonts, source archives, and generated artwork previews are excluded from Git. Obtain the assets from their creators using the links below, then follow the [local asset setup guide](assets/README.md).
+**Asset packs are not included in this repository.** The project uses paid character packs, and raw third-party artwork, fonts, source archives, and asset-sheet previews are excluded from Git. Only the composed game screenshots shown above are included for documentation. Obtain the assets from their creators using the links below, then follow the [local asset setup guide](assets/README.md).
 
 A fresh clone contains the source code, but the complete GUI and asset-dependent tests require the local packs. In particular, missing required UI images prevent the interface from loading.
 
