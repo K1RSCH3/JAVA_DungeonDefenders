@@ -7,17 +7,57 @@ import java.util.*;
 import javax.imageio.ImageIO;
 import idle.Catalog.*;
 
-/** Original procedural placeholders, with optional user-supplied sprite overrides. */
+/** original procedural placeholders, with optional user-supplied sprite overrides */
 public final class PixelArt {
     private static final Map<String, BufferedImage> cache = new HashMap<>();
+    private static final Map<Role, BufferedImage> portraits = new EnumMap<>(Role.class);
+
+    // prevent construction because drawing and image caches are shared
     private PixelArt() {}
+
+    // build a small transparent roster portrait
+    // use the same fitting rules as the selected hero card
     public static BufferedImage portrait(Role role) {
-        BufferedImage image = new BufferedImage(32, 40, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage image = new BufferedImage(96, 40, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        drawActor(g, "characters", role.sprite(), role, "idle", 0, 0, 0, 32, 40);
+        drawPortrait(g, role, 0, 0, 96, 40);
         g.dispose(); return image;
     }
+
+    // load and crop the visible idle art for a hero, including its weapon
+    // respect custom png overrides and cache the crop for later repaints
+    private static BufferedImage portraitSource(Role role) {
+        if (portraits.containsKey(role)) return portraits.get(role);
+        AssetPack.Actor actor = Files.exists(Paths.get("assets", "characters", role.sprite() + ".png")) ? null : AssetPack.actor("characters", role.sprite());
+        BufferedImage source = actor == null ? sprite("characters", role.sprite(), role) : actor.portraitImage();
+        int left = source.getWidth(), top = source.getHeight(), right = -1, bottom = -1;
+        for (int y = 0; y < source.getHeight(); y++) for (int x = 0; x < source.getWidth(); x++) if ((source.getRGB(x, y) >>> 24) > 0) {
+            left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y);
+        }
+        if (right >= left) source = source.getSubimage(left, top, right - left + 1, bottom - top + 1);
+        portraits.put(role, source); return source;
+    }
+
+    /** a shared visible height lets even the widest weapon fit without cropping or distortion */
+    // fit all classes to a shared visible height based on the widest portrait
+    // center the result so long swords and bows stay inside the same frame
+    public static void drawPortrait(Graphics2D graphics, Role role, int x, int y, int width, int height) {
+        double widest = 1;
+        for (Role member : Role.values()) {
+            BufferedImage source = portraitSource(member);
+            widest = Math.max(widest, source.getWidth() / (double) source.getHeight());
+        }
+        BufferedImage source = portraitSource(role);
+        int h = Math.max(1, (int) Math.floor(Math.min(height, width / widest)));
+        int w = Math.max(1, (int) Math.floor(h * source.getWidth() / (double) source.getHeight()));
+        Graphics2D g = (Graphics2D) graphics.create();
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g.drawImage(source, x + (width - w) / 2, y + (height - h) / 2, w, h, null); g.dispose();
+    }
+
+    // load a custom sprite or create placeholder art when needed
+    // cache the result so repainting does not repeat file access
     public static BufferedImage sprite(String group, String id, Role role) {
         String key = group + "/" + id;
         if (cache.containsKey(key)) return cache.get(key);
@@ -30,15 +70,24 @@ public final class PixelArt {
         if (art == null) art = role == null ? enemy(id) : hero(role);
         cache.put(key, art); return art;
     }
+
+    // choose a custom override, a supplied animation sheet, or fallback art
+    // this is the common drawing entry point for battlefield actors
     public static void drawActor(Graphics2D g, String group, String id, Role role, String action, int frame, int x, int y, int w, int h) {
-        // Explicit user overrides take precedence over the bundled pack mapping.
+        // explicit user overrides take precedence over the bundled pack mapping
         AssetPack.Actor packed = Files.exists(Paths.get("assets", group, id + ".png")) ? null : AssetPack.actor(group, id);
         if (packed != null) packed.draw(g, action, frame, x, y, w, h, group.equals("enemies"));
         else draw(g, sprite(group, id, role), x, y, w, h, frame);
     }
+
+    // draw one colored pixel-art block
+    // placeholder heroes and enemies are assembled from these simple shapes
     private static void rect(Graphics2D g, int color, int x, int y, int w, int h) {
         g.setColor(new Color(color)); g.fillRect(x, y, w, h);
     }
+
+    // generate a recognizable fallback hero when no supplied art is available
+    // colors and weapon shapes distinguish the classes
     private static BufferedImage hero(Role role) {
         BufferedImage img = new BufferedImage(32, 40, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
@@ -68,6 +117,9 @@ public final class PixelArt {
         }
         g.dispose(); return img;
     }
+
+    // generate fallback enemy art from its identifier
+    // this keeps an encounter drawable even if a pack or override is missing
     private static BufferedImage enemy(String id) {
         BufferedImage img = new BufferedImage(40, 44, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
@@ -92,7 +144,10 @@ public final class PixelArt {
         }
         g.dispose(); return img;
     }
-    /** Optional sheets contain horizontal equal-size frames. PNG height is the frame size. */
+
+    /** optional sheets contain horizontal equal-size frames. png height is the frame size */
+    // fit an override image or equal-size horizontal frame sheet into a drawing area
+    // keep its proportions and align its feet to the bottom
     public static void draw(Graphics2D g, BufferedImage image, int x, int y, int w, int h, int frame) {
         int size = image.getHeight();
         int count = image.getWidth() >= size * 2 && image.getWidth() % size == 0 ? image.getWidth() / size : 1;

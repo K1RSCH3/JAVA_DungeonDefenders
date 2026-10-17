@@ -2,8 +2,9 @@ package idle;
 
 import java.util.*;
 
-/** Stable IDs here are also used by save files and optional sprite filenames. */
+/** stable ids here are also used by save files and optional sprite filenames */
 public final class Catalog {
+    // prevent construction because this class holds shared definitions
     private Catalog() {}
     public enum Slot { WEAPON, HAT, ARMOR, SHOES }
     public enum Weapon { SWORD, SPEAR, AXE, BOW, STAFF, WAND }
@@ -20,11 +21,20 @@ public final class Catalog {
         public final String label;
         public final int color;
         public final Set<Weapon> weapons;
+
+        // define a recruitable class, its display color, and allowed weapon types
+        // store the weapon set as read-only so equipment rules cannot change accidentally
         Role(String label, int color, Weapon... weapons) {
             this.label = label; this.color = color;
             this.weapons = Collections.unmodifiableSet(EnumSet.copyOf(Arrays.asList(weapons)));
         }
+
+        // check whether a hero class can equip an item
+        // armor slots are universal, while weapons must match the class's allowed set
         public boolean accepts(Item item) { return item.slot != Slot.WEAPON || weapons.contains(item.weapon); }
+
+        // convert the class name into the stable asset identifier
+        // this is used for pack lookup and optional custom png overrides
         public String sprite() { return name().toLowerCase(Locale.ROOT); }
     }
     public static final class Item {
@@ -32,10 +42,16 @@ public final class Catalog {
         public final Slot slot;
         public final Weapon weapon;
         public final int tier, price;
+
+        // create a gear definition with a stable id, tier, slot, and price
+        // items are shared definitions rather than individual inventory copies
         Item(String id, String name, Slot slot, Weapon weapon, int tier) {
             this.id = id; this.name = name; this.slot = slot; this.weapon = weapon; this.tier = tier;
             this.price = tier == 1 ? 35 : tier == 2 ? 240 : 1200;
         }
+
+        // describe the item's stat contribution for inventory and shop labels
+        // the actual combat formulas live in gamestate.hero
         public String bonus() {
             switch (slot) {
                 case WEAPON: return "+" + tier * 5 + " power";
@@ -44,6 +60,8 @@ public final class Catalog {
                 default: return "+" + tier * 8 + " HP, +" + tier * 5 + "% speed";
             }
         }
+
+        // provide a readable item label for swing controls that use the object's default text
         @Override public String toString() { return name + "  /  " + bonus(); }
     }
     public static final List<Item> ITEMS;
@@ -61,6 +79,9 @@ public final class Catalog {
         }
         ITEMS = Collections.unmodifiableList(items);
     }
+
+    // find a known item by its saved id
+    // reject unknown ids so damaged saves cannot create undefined equipment
     public static Item item(String id) {
         return ITEMS.stream().filter(i -> i.id.equals(id)).findFirst().orElseThrow(() -> new IllegalArgumentException("Unknown item: " + id));
     }
@@ -72,5 +93,8 @@ public final class Catalog {
         "Eyeball Monster", "Lava Slime", "Hellbat", "Ghostfire", "Minotaur",
         "Black-Knight_A", "Black-Knight_B", "Black-Knight_C", "Flame-Golem", "Warlock"
     };
+
+    // normalize an enemy display name into an asset identifier
+    // spaces and hyphens become underscores so both naming styles resolve consistently
     public static String enemySprite(String name) { return name.toLowerCase(Locale.ROOT).replace(' ', '_').replace('-', '_'); }
 }
