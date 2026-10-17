@@ -187,6 +187,28 @@ The `ashen-` save names are retained for compatibility with earlier versions of 
 
 To start over, use **New Expedition**. To reset manually, close the game and move `ashen-save.properties` somewhere safe. The older `save.properties` format is not imported.
 
+## Future updates
+
+V1 establishes the core gameplay. The following are potential improvements for later versions, with priorities subject to change. They are not yet implemented or assigned to a release.
+
+### Fixes and polish
+
+- Refine movement, attack timing, and transitions to reduce abrupt animation changes
+- Improve text spacing, readability, and panel layouts across window sizes and display scaling
+- Tune enemy scaling, boss difficulty, upgrade costs, and gold rewards
+- Expand checks for save recovery, offline rewards, and longer play sessions
+
+### Possible features
+
+- Give enemies and bosses distinct skills and attack patterns
+- Add more equipment variety and clearer item comparisons
+- Add dedicated gear and weapon artwork once the assets are supplied. These assets have not been added yet, so equipment currently changes stats without changing character sprites
+- Introduce additional environments and encounter variety
+- Add music, sound effects, and volume controls
+- Improve missing-asset messages and setup guidance for new players
+
+Completed changes will be recorded in the [changelog](CHANGELOG.md), keeping the V1 feature baseline available for reference.
+
 ## Development
 
 | Source file | Responsibility |
