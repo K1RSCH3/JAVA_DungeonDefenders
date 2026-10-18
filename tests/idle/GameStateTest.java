@@ -42,6 +42,7 @@ public final class GameStateTest {
     // run gameplay, save, asset, and ui checks using isolated data
     // also render previews so layout changes can be reviewed without altering the player's campaign
     public static void main(String[] args) throws Exception {
+        System.setProperty("dungeon.audio.disabled", "true");
         GameState s = new GameState();
         check(s.heroes.size() == 9 && s.activeCount() == 4, "Playable roster and party cap");
         check(Catalog.ENEMIES.length == 33, "Complete enemy roster");
@@ -78,9 +79,11 @@ public final class GameStateTest {
         int stalledStage = battle.stage; double savedGold = battle.gold;
         battle.heroes.forEach(h -> h.hp = 0); battle.tick(); check(battle.rest == 5, "Defeat enters rest");
         check(battle.stage == stalledStage && battle.gold == savedGold && battle.enemyHp == battle.enemyMaxHp(), "Failed attempt preserves stage and gold, resets enemies");
-        check(battle.heroes.stream().allMatch(h -> h.hp == h.maxHp()), "Party rescued immediately");
+        check(battle.activeCount() == 0 && battle.heroes.stream().filter(h -> h.level > 0).allMatch(h -> h.recoverySeconds == 30 && h.hp == 0), "Downed party goes to camp");
         for (int i = 0; i < 5; i++) battle.tick();
-        check(battle.rest == 0 && battle.heroes.stream().allMatch(h -> h.hp == h.maxHp()), "Rest revives party");
+        check(battle.rest == 0 && battle.activeCount() == 0, "Empty party waits for manual deployment");
+        battle.advanceCamp(30);
+        check(battle.heroes.stream().filter(h -> h.level > 0).allMatch(h -> h.hp == h.maxHp() && h.recoverySeconds == 0), "Camp recovery heals recruited heroes");
         GameState wall = new GameState(); wall.stage = 1000; wall.enemyHp = wall.enemyMaxHp();
         for (int i = 0; i < 250; i++) wall.tick();
         check(wall.stage == 1000 && wall.kills == 0 && wall.gold == 120 && wall.inventory.isEmpty(), "Underpowered party cannot chip past a stage across retries or earn victory rewards");
@@ -204,6 +207,8 @@ public final class GameStateTest {
             catch (IOException e) { throw new RuntimeException(e); }
         });
         EncounterTest.run();
+        AudioTest.run();
+        CampRecoveryTest.run();
         MainMenuFlowTest.run();
         System.out.println("All Dungeon Defenders checks passed, including main menu lifecycle. UI preview: out/preview.png");
     }

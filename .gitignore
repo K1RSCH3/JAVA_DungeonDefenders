@@ -3,6 +3,7 @@ save.properties
 ashen-save.properties
 ashen-save-backup-*.properties
 settings.properties
+/saves/
 *.lock
 save-*.tmp
 *.class

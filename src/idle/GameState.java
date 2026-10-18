@@ -8,6 +8,7 @@ import idle.Catalog.*;
 public final class GameState {
     public static final int MAX_STAGE = 10000, MAX_LEVEL = 100;
     public static final double MAX_GOLD = 1e12;
+    public static final int CAMP_RECOVERY_SECONDS = 30;
 
     // each upgrade has its own rank and price, so improving one aspect does not buy the others
     public enum Upgrade { ATTACK, HEALTH, HEALING, GUARD }
@@ -16,6 +17,7 @@ public final class GameState {
         public int level;
         public boolean active;
         public double hp;
+        public int recoverySeconds;
         public final EnumMap<Upgrade, Integer> upgrades = new EnumMap<>(Upgrade.class);
 
         // read the purchased rank for one upgrade track
@@ -59,7 +61,43 @@ public final class GameState {
     public double gold = 120, enemyHp;
     public int stage = 1, kills = 0, ticks = 0, rest = 0;
     public long savedAt = System.currentTimeMillis();
+    // keep the display name inside the save so moving the file preserves its identity
+    public String campaignName = "Existing Expedition";
     public String message = "The defenders march. Hold the line against the dark.";
+    public String campNotice = "";
+    public int campNoticeSerial;
+
+    // remove downed fighters without discarding gear or progress
+    // automatic rescue may empty the party even though manual removal keeps one fighter
+    public void rescueDowned() {
+        List<String> rescued = new ArrayList<>();
+        for (Hero h : heroes) if (h.active && h.hp <= 0) {
+            h.active = false; h.hp = 0; h.recoverySeconds = CAMP_RECOVERY_SECONDS;
+            rescued.add(h.role.label);
+        }
+        if (!rescued.isEmpty()) {
+            campNotice = String.join(", ", rescued) + " sent to camp. Recovering for 30 seconds. Add a ready hero from Party.";
+            campNoticeSerial++; message = campNotice;
+            if (activeCount() == 0) { enemyHp = enemyMaxHp(); rest = 5; }
+        }
+    }
+
+    // heal at camp using elapsed seconds rather than combat rounds
+    // offline time uses the same calculation and recovered heroes wait for manual deployment
+    public void advanceCamp(long seconds) {
+        if (seconds <= 0) return;
+        List<String> ready = new ArrayList<>();
+        for (Hero h : heroes) if (h.level > 0 && !h.active && h.recoverySeconds > 0) {
+            int elapsed = (int) Math.min(seconds, h.recoverySeconds);
+            h.hp = Math.min(h.maxHp(), h.hp + (h.maxHp() - h.hp) * elapsed / h.recoverySeconds);
+            h.recoverySeconds -= elapsed;
+            if (h.recoverySeconds == 0) { h.hp = h.maxHp(); ready.add(h.role.label); }
+        }
+        if (!ready.isEmpty()) {
+            campNotice = String.join(", ", ready) + " recovered. Select a hero in Party and choose Add to party.";
+            campNoticeSerial++; message = campNotice;
+        }
+    }
     public double lastDamage = 0, lastHealing = 0;
 
     /** transient events identify the actual target, including damage carried to the next enemy */
@@ -157,7 +195,7 @@ public final class GameState {
     // recruit a hero or apply the older all-stat training operation
     // the interface uses this for recruitment, while existing levels keep their original bonuses
     public boolean train(Hero h) {
-        if (h.level >= MAX_LEVEL || gold < levelCost(h)) return false;
+        if (h.recoverySeconds > 0 || h.level >= MAX_LEVEL || gold < levelCost(h)) return false;
         gold -= levelCost(h); h.level++; h.hp = h.maxHp();
         message = h.role.label + (h.level == 1 ? " has joined your roster." : " has grown stronger."); return true;
     }
@@ -181,9 +219,10 @@ public final class GameState {
     // move a recruited hero between camp and the active party
     // reject changes that exceed four slots or remove the last available fighter
     public boolean toggle(Hero h) {
-        if (h.level == 0 || (!h.active && activeCount() >= 4) || (h.active && activeCount() == 1)) return false;
+        if (h.level == 0 || h.recoverySeconds > 0 || h.hp <= 0 || (!h.active && activeCount() >= 4) || (h.active && activeCount() == 1)) return false;
         if (h.alive() && rest == 0 && heroes.stream().noneMatch(other -> other != h && other.alive())) return false;
         h.active = !h.active;
+        if (!h.active && h.hp < h.maxHp()) h.recoverySeconds = CAMP_RECOVERY_SECONDS;
         message = h.role.label + (h.active ? " joins the expedition." : " returns to camp."); return true;
     }
 
@@ -221,12 +260,16 @@ public final class GameState {
     // healing and damage create visual events, victories advance the stage, and failed attempts recover on the same stage
     public void tick() {
         ticks = (ticks + 1) % 1000000; lastDamage = 0; lastHealing = 0; combatEvents.clear();
+        boolean hadParty = activeCount() > 0;
+        rescueDowned();
+        if (hadParty && activeCount() == 0) return;
         if (rest > 0) {
             if (--rest == 0) {
-                heroes.forEach(h -> h.hp = h.maxHp()); enemyHp = enemyMaxHp(); message = "Regrouped. Retrying stage " + stage + ". Train or equip your party to push further.";
+                enemyHp = enemyMaxHp(); message = activeCount() == 0 ? "Expedition paused. Add a ready hero from Party." : "Regrouped. Retrying stage " + stage + ".";
             }
             return;
         }
+        if (activeCount() == 0) return;
 
         // resolve support and outgoing attacks first
         // damage spills into the next target, and each applied part gets its own visual event
@@ -271,14 +314,8 @@ public final class GameState {
         }
         }
 
-        // failed attempts cannot gradually chip through a stronger encounter
-        // restore both sides, preserve the stage and purchases, and let the player regroup
-        if (heroes.stream().noneMatch(Hero::alive)) {
-            rest = 5; enemyHp = enemyMaxHp();
-            heroes.forEach(h -> h.hp = h.maxHp());
-            combatEvents.clear(); lastDamage = 0; lastHealing = 0;
-            message = "Progress stalled at stage " + stage + ". Party rescued; regrouping for 5 seconds. Train or equip better gear to advance.";
-        }
+        // only a full defeat resets the enemies, while surviving heroes keep fighting
+        rescueDowned();
     }
 
     // grant estimated camp gold for elapsed real time, capped at eight hours
@@ -287,6 +324,7 @@ public final class GameState {
         long seconds = Math.min(8 * 3600, Math.max(0, (now - savedAt) / 1000));
         double before = gold;
         addGold(seconds * Math.min(1, dps() / enemyMaxHp()) * reward() * .35);
+        advanceCamp(seconds);
         savedAt = now; return gold - before;
     }
 }

@@ -34,8 +34,9 @@ public final class SaveStore implements AutoCloseable {
         Properties p = new Properties();
         try (Reader in = Files.newBufferedReader(file)) {
             p.load(in);
+            s.campaignName = p.getProperty("campaignName", "Existing Expedition");
             String version = p.getProperty("version");
-            if (!"1".equals(version) && !"2".equals(version) && !"3".equals(version)) throw new IllegalArgumentException("Unsupported save version");
+            if (!"1".equals(version) && !"2".equals(version) && !"3".equals(version) && !"4".equals(version)) throw new IllegalArgumentException("Unsupported save version");
             s.stage = integer(p, "stage", 1, GameState.MAX_STAGE);
             s.gold = number(p, "gold", 0, GameState.MAX_GOLD);
             double oldMax = "1".equals(version) ? (45 + s.stage * 20.0) * (s.stage % 10 == 0 ? 2.5 : 1) : s.enemyMaxHp();
@@ -49,7 +50,7 @@ public final class SaveStore implements AutoCloseable {
                 String key = h.role.name() + ".";
                 h.level = integer(p, key + "level", 0, GameState.MAX_LEVEL);
                 for (GameState.Upgrade upgrade : GameState.Upgrade.values()) {
-                    int rank = "3".equals(version) ? integer(p, key + "upgrade." + upgrade.name(), 0, GameState.MAX_LEVEL) : 0;
+                    int rank = ("3".equals(version) || "4".equals(version)) ? integer(p, key + "upgrade." + upgrade.name(), 0, GameState.MAX_LEVEL) : 0;
                     if (rank > 0 && (h.level == 0 || upgrade == GameState.Upgrade.HEALING && h.role != Role.PRIEST)) throw new IllegalArgumentException("Invalid upgrade");
                     h.upgrades.put(upgrade, rank);
                 }
@@ -67,9 +68,14 @@ public final class SaveStore implements AutoCloseable {
                     }
                 }
                 h.hp = number(p, key + "hp", 0, h.maxHp());
+                h.recoverySeconds = "4".equals(version) ? integer(p, key + "recoverySeconds", 0, GameState.CAMP_RECOVERY_SECONDS) : 0;
+                if (h.recoverySeconds > 0 && (h.active || h.level == 0)) throw new IllegalArgumentException("Invalid recovery state");
+                // older saves may contain an unconscious hero already waiting at camp
+                // give them a recovery timer so they cannot remain permanently undeployable
+                if (h.level > 0 && !h.active && h.hp <= 0 && h.recoverySeconds == 0) h.recoverySeconds = GameState.CAMP_RECOVERY_SECONDS;
             }
-            if (s.activeCount() < 1 || s.activeCount() > 4) throw new IllegalArgumentException("Party size");
-            if (s.rest == 0 && s.heroes.stream().noneMatch(Hero::alive)) throw new IllegalArgumentException("Party cannot fight");
+            if (s.activeCount() > 4 || s.heroes.stream().noneMatch(h -> h.level > 0)) throw new IllegalArgumentException("Party size");
+            s.rescueDowned();
             for (Item item : Catalog.ITEMS) s.inventory.put(item.id, integer(p, "bag." + item.id, 0, 1008));
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new IOException("Invalid save: " + file.getFileName() + ". Preserve it and move it aside to start fresh.", e);
@@ -95,12 +101,14 @@ public final class SaveStore implements AutoCloseable {
     // atomic replacement is preferred so a failed write does not leave half a save
     public void save(GameState s) throws IOException {
         Properties p = new Properties();
-        p.setProperty("version", "3"); p.setProperty("stage", "" + s.stage); p.setProperty("gold", "" + s.gold);
+        p.setProperty("campaignName", s.campaignName);
+        p.setProperty("version", "4"); p.setProperty("stage", "" + s.stage); p.setProperty("gold", "" + s.gold);
         p.setProperty("enemyHp", "" + s.enemyHp); p.setProperty("kills", "" + s.kills);
         p.setProperty("ticks", "" + s.ticks); p.setProperty("rest", "" + s.rest);
         p.setProperty("savedAt", "" + System.currentTimeMillis());
         for (Hero h : s.heroes) {
             String key = h.role.name() + ".";
+            p.setProperty(key + "recoverySeconds", "" + h.recoverySeconds);
             p.setProperty(key + "level", "" + h.level); p.setProperty(key + "active", "" + h.active); p.setProperty(key + "hp", "" + h.hp);
             for (GameState.Upgrade upgrade : GameState.Upgrade.values()) p.setProperty(key + "upgrade." + upgrade.name(), "" + h.rank(upgrade));
             h.gear.forEach((slot, item) -> p.setProperty(key + slot.name(), item.id));
@@ -109,7 +117,7 @@ public final class SaveStore implements AutoCloseable {
         Files.createDirectories(file.getParent());
         Path temp = Files.createTempFile(file.getParent(), "save-", ".tmp");
         try {
-            try (Writer out = Files.newBufferedWriter(temp)) { p.store(out, "Dungeon Defenders / save version 3"); }
+            try (Writer out = Files.newBufferedWriter(temp)) { p.store(out, "Dungeon Defenders / save version 4"); }
             try { Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE); }
             catch (AtomicMoveNotSupportedException e) { Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING); }
         } finally { Files.deleteIfExists(temp); }

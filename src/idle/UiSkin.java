@@ -66,6 +66,9 @@ public final class UiSkin {
     // unknown actions receive a generic shield icon
     public static Icon actionIcon(String title) {
         String t = title.toLowerCase(Locale.ROOT);
+        if (t.equals("play") || t.contains("create")) return icon(3, 37, 24);
+        if (t.contains("rename")) return icon(1, 32, 24);
+        if (t.contains("delete") || t.equals("back") || t.equals("cancel")) return icon(3, 40, 24);
         if (t.contains("how") || t.contains("credit")) return icon(1, 32, 24);
         if (t.contains("train") || t.contains("recruit")) return icon(1, 31, 24);
         return icon(3, t.contains("continue") ? 37 : t.contains("new") ? 9 : t.contains("setting") ? 35 : t.contains("how") ? 22 : t.contains("credit") ? 22 : t.contains("quit") ? 40 : t.contains("train") || t.contains("recruit") ? 27 : t.contains("forge") ? 38 : t.contains("menu") ? 33 : t.contains("expand") || t.contains("show party") ? 37 : 12, 24);
@@ -183,6 +186,13 @@ public final class UiSkin {
             if (b.isEnabled() && hover > 0) { art.setColor(new Color(235, 195, 115, (int) (hover * (pressed ? 22 : 44)))); art.fillRoundRect(5, 4, c.getWidth() - 10, c.getHeight() - 10, 8, 8); }
             art.dispose();
             if (Boolean.TRUE.equals(b.getClientProperty("selectedHero"))) draw(g, "selection", 0, 0, c.getWidth(), c.getHeight(), false);
+            // glow marks the next guide step and becomes steady when reduced motion is enabled
+            if (b.isEnabled() && Boolean.TRUE.equals(b.getClientProperty("guideGlow"))) {
+                Graphics2D glow = (Graphics2D) g.create();
+                int alpha = Boolean.TRUE.equals(b.getClientProperty("staticGlow")) ? 150 : 110 + (int) (55 * Math.sin(System.currentTimeMillis() / 260.0));
+                glow.setColor(new Color(255, 208, 90, alpha)); glow.setStroke(new BasicStroke(3));
+                glow.drawRoundRect(3, 3, Math.max(0, b.getWidth() - 7), Math.max(0, b.getHeight() - 7), 8, 8); glow.dispose();
+            }
             Graphics2D text = (Graphics2D) g.create(); text.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             if (pressed) text.translate(0, 3);
             super.paint(text, c); text.dispose();

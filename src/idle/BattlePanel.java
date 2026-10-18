@@ -17,6 +17,41 @@ public final class BattlePanel extends JPanel {
     private int observedTick = -1, transition = DEPARTURE_HOLD, observedKills, previousStage;
     private int defeatedStage;
     private boolean reducedMotion, damageNumbers = true;
+    private GameAudio audio;
+    private final java.util.Set<String> sounded = new java.util.HashSet<>();
+    private int audioStage = -1, audioRest;
+    private boolean victorySound;
+    private final java.util.List<Hero> visibleParty = new java.util.ArrayList<>();
+    private final java.util.Map<Hero, Long> campDepartures = new java.util.HashMap<>();
+
+    // attach the live audio owner while leaving previews and model tests silent
+    public void setAudio(GameAudio audio) { this.audio = audio; }
+
+    // trigger cues once at the same logical frames used by visual attacks and impacts
+    // deduplicate spillover events so one sword swing does not play four times
+    private void animateAudio() {
+        if (audio == null) return;
+        int visibleStage = transition < DEPARTURE_HOLD && defeatedStage > 0 ? defeatedStage : state.stage;
+        if (audioStage != visibleStage) {
+            audioStage = visibleStage; audio.scene(Encounters.boss(visibleStage));
+            if (Encounters.boss(visibleStage)) audio.play("ambience/fr_ambience_distant_roar_texture");
+        }
+        if (state.rest > 0 && audioRest == 0) audio.play("feedback/fr_feedback_combat_defeat");
+        audioRest = state.rest;
+        double phase = (animation - tickStarted) / MOTION_SCALE;
+        if (victorySound && phase >= 28) { audio.play("feedback/fr_feedback_combat_victory"); victorySound = false; }
+        if (state.rest > 0) return;
+        for (GameState.CombatEvent event : state.combatEvents) {
+            if (event.amount <= 0) continue;
+            String enemy = event.healing ? "" : Encounters.members(event.stage)[event.enemy];
+            double delay = event.incoming ? enemyDelay(enemy, event.enemy) : attackDelay(event.hero.role);
+            String key = event.incoming ? "enemy-" + event.enemy : event.hero.role.name() + "-" + event.healing;
+            if (phase >= delay && sounded.add(key + "-cast"))
+                audio.play(event.incoming ? GameAudio.enemyCue(enemy) : GameAudio.heroCue(event.hero.role, event.healing));
+            if (phase >= delay + 8 && sounded.add(key + "-impact"))
+                audio.play(GameAudio.impactCue(event.incoming, event.incoming ? event.ally.role : event.hero.role, enemy, event.healing));
+        }
+    }
 
     // compare successive rounds for hurt reactions and remember the last drawn positions
     // death positions prevent a hero who falls during a lunge from jumping back to formation
@@ -80,6 +115,7 @@ public final class BattlePanel extends JPanel {
     // this panel animates results but does not decide combat damage
     public BattlePanel(GameState state) {
         this.state = state; observedKills = state.kills; previousStage = state.stage;
+        for (Hero h : state.heroes) if (h.active) visibleParty.add(h);
         for (Hero h : state.heroes) previousHp.put(h, h.hp);
         setPreferredSize(new Dimension(960, 540)); setBackground(new Color(0x11121b));
     }
@@ -103,7 +139,13 @@ public final class BattlePanel extends JPanel {
     // keep departed enemy death times separate so old corpses never replay their death when the patrol is cleared
     public void animate() {
         animation++;
+        // keep rescued heroes visible for a final death sequence before freeing their visual slot
+        // camp healing must not make a departing sprite stand back up
+        for (Hero h : visibleParty) if (!h.active && h.hp <= 0 && h.recoverySeconds > 0) campDepartures.putIfAbsent(h, animation);
+        visibleParty.removeIf(h -> !h.active && (!campDepartures.containsKey(h) || animation - campDepartures.get(h) >= ROUND_FRAMES));
+        for (Hero h : state.heroes) if (h.active && !visibleParty.contains(h)) { visibleParty.add(h); campDepartures.remove(h); }
         if (state.kills != observedKills) {
+            victorySound = true;
             observedKills = state.kills; defeatedStage = previousStage; transition = 0;
 
             // keep completed deaths. only the final victims start a new death animation
@@ -117,6 +159,7 @@ public final class BattlePanel extends JPanel {
             transition++;
         }
         if (state.ticks != observedTick) {
+            sounded.clear();
             observedTick = state.ticks; tickStarted = animation; wounded.clear();
             for (Hero h : state.heroes) { if (h.hp < previousHp.getOrDefault(h, h.hp)) wounded.add(h); previousHp.put(h, h.hp); }
         }
@@ -124,13 +167,14 @@ public final class BattlePanel extends JPanel {
             if (h.hp <= 0) {
                 fallenAt.putIfAbsent(h, animation);
                 heroDeathPositions.putIfAbsent(h, heroDrawPositions.getOrDefault(h, heroPoint(h)));
-            } else { fallenAt.remove(h); heroDeathPositions.remove(h); }
+            } else if (!campDepartures.containsKey(h) || h.active) { fallenAt.remove(h); heroDeathPositions.remove(h); }
         }
         for (int i = 0; i < state.enemyCount(); i++) {
             if (state.memberHp(i) <= 0 && enemyFallenAt[i] < 0)
                 enemyFallenAt[i] = wasHit(i, state.stage) ? tickStarted + 40 : animation;
             if (state.memberHp(i) > 0) enemyFallenAt[i] = -1;
         }
+        animateAudio();
         repaint();
     }
 
@@ -208,7 +252,7 @@ public final class BattlePanel extends JPanel {
     // return null for a hero at camp because that hero has no battlefield position
     private Point heroPoint(Hero hero) {
         int index = 0;
-        for (Hero h : state.heroes) if (h.active) {
+        for (Hero h : visibleParty) {
             if (h == hero) return new Point(41 + index % 2 * 72 + index / 2 * 12, 125 + index / 2 * 45);
             index++;
         }
@@ -408,17 +452,19 @@ public final class BattlePanel extends JPanel {
 
 
         int index = 0;
-        for (Hero hero : state.heroes) if (hero.active) {
+        for (Hero hero : visibleParty) {
+            boolean departing = !hero.active && campDepartures.containsKey(hero);
             int x = 25 + index % 2 * 72 + index / 2 * 12, feet = 145 + index / 2 * 45;
             int localPhase = phase - attackDelay(hero.role);
             boolean attacking = !marching && state.rest == 0 && localPhase >= 0 && localPhase < 18 && state.combatEvents.stream().anyMatch(e -> e.hero == hero);
-            String action = hero.hp <= 0 ? "death" : marching ? "walk" : attacking ? (hero.role == Catalog.Role.PRIEST && state.lastHealing > 0 ? "heal" : state.ticks % 5 == 0 ? "attack2" : "attack") : phase >= 18 && phase < 30 && wounded.contains(hero) ? "hurt" : "idle";
+            String action = departing || hero.hp <= 0 ? "death" : marching ? "walk" : attacking ? (hero.role == Catalog.Role.PRIEST && state.lastHealing > 0 ? "heal" : state.ticks % 5 == 0 ? "attack2" : "attack") : phase >= 18 && phase < 30 && wounded.contains(hero) ? "hurt" : "idle";
             AssetPack.Actor actor = AssetPack.actor("characters", hero.role.sprite());
             int frames = actor == null ? 6 : actor.frames(action);
             int frame = hero.hp <= 0 ? (int) ((animation - fallenAt.getOrDefault(hero, animation)) / (4 * MOTION_SCALE)) : marching ? (int) (distance * frames / 32) : action.equals("idle") ? (int) (animation / 4) : attacking ? localPhase * frames / 18 : Math.max(0, phase - 18) * frames / 11;
-            Composite old = g.getComposite(); if (hero.hp <= 0) g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .45f));
+            if (departing) frame = (int) ((animation - campDepartures.get(hero)) / (4 * MOTION_SCALE));
+            Composite old = g.getComposite(); if (departing || hero.hp <= 0) g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, .45f));
             int drawX = x, drawFeet = feet;
-            if (!reducedMotion && attacking && hero.role != Catalog.Role.WIZARD && hero.role != Catalog.Role.PRIEST && hero.role != Catalog.Role.ARCHER) {
+            if (!departing && !reducedMotion && attacking && hero.role != Catalog.Role.WIZARD && hero.role != Catalog.Role.PRIEST && hero.role != Catalog.Role.ARCHER) {
                 GameState.CombatEvent strike = state.combatEvents.stream().filter(e -> e.hero == hero && !e.healing && !e.incoming).findFirst().orElse(null);
                 if (strike != null) {
                     Point target = enemyPoint(strike.enemy, strike.stage);
@@ -427,12 +473,12 @@ public final class BattlePanel extends JPanel {
                     drawFeet += (int) ((target.y + 20 - feet) * lunge);
                 }
             }
-            if (hero.hp <= 0 && heroDeathPositions.get(hero) != null) {
+            if ((departing || hero.hp <= 0) && heroDeathPositions.get(hero) != null) {
                 Point deathPosition = heroDeathPositions.get(hero); drawX = deathPosition.x - 16; drawFeet = deathPosition.y + 20;
             }
             heroDrawPositions.put(hero, new Point(drawX + 16, drawFeet - 20));
             shadow(g, drawX + 16, drawFeet, 28, false);
-            PixelArt.drawActor(g, "characters", hero.role.sprite(), hero.role, reducedMotion ? "idle" : action, reducedMotion ? 0 : frame, drawX, drawFeet - 40, 32, 40);
+            PixelArt.drawActor(g, "characters", hero.role.sprite(), hero.role, reducedMotion && !departing ? "idle" : action, reducedMotion && !departing ? 0 : frame, drawX, drawFeet - 40, 32, 40);
             g.setComposite(old); index++;
         }
         boolean dying = transition < DEPARTURE_HOLD && defeatedStage > 0;
