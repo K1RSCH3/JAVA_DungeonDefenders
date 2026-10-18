@@ -35,6 +35,12 @@ Equipment, audio, camp recovery, and guidance update, recorded on October 19, 20
 
 ### Interface and checks
 
+- Changed recruitment, shopping, and equipment guides into action-driven sequences with next-control highlights and dismissal at every step
+- Added regrouping guidance for ready replacements, recovery countdowns, full-party swaps, and manual redeployment, including empty-party saves
+- Guided players back to hidden management controls and added regression checks for navigation, recruitment, deployment, recovery, and dismissal
+- Corrected the Lancer's body scale to account for his upright spear, with consistent action scaling and portraits that retain the full weapon
+- Refreshed the 1.5.0 documentation screenshots for Play, named expeditions, party management, Raven equipment, upgrades, combat, and bosses
+- Added current camp-recovery and closable equipment-guide screenshots in place of the old defeat-flow example
 - Replaced the main menu's continue/new actions with Play and a framed expedition library using medieval UI assets
 - Added independent named campaigns, stage/gold/party summaries, and left-side options for renaming or confirmed deletion
 - Preserved the original campaign in place as Existing Expedition, kept offline timestamps unchanged during renaming, and excluded the new saves folder from Git

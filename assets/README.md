@@ -86,6 +86,10 @@ Only this README is tracked under `assets/`. Local packs, fonts, and custom spri
 
 **Expedition library:** the Play screen reuses medieval wood-and-iron panels, scroll controls, map icons, and gear-shaped options buttons. Naming, renaming, and delete-confirmation dialogs use the same frames and themed buttons. No additional asset pack is needed.
 
+**Lancer proportions:** the supplied Lancer artwork receives a 30% scale correction because its upright spear extends above the helmet. All battlefield actions share the same corrected scale and foot anchor. Portraits account for body proportions while reserving room for the full weapon. Custom PNG overrides are unchanged.
+
+The [main README screenshots](../README.md#screenshots) show the current 1.5.0 interface using isolated demo campaigns. Only composed game screenshots are included in `docs/screenshots/`, while raw art, audio, and generated asset galleries remain local.
+
 Some missing character and background art has placeholder fallbacks. **Required medieval UI images do not:** a missing image raises a `Missing medieval UI asset` error. A fresh clone therefore needs the local assets before the full interface and asset-dependent tests can run.
 
 ## Equipment icons

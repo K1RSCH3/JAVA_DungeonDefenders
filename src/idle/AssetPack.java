@@ -52,6 +52,7 @@ public final class AssetPack {
     public static final class Actor {
         private final Map<String, BufferedImage> clips = new HashMap<>();
         private final Rectangle body;
+        private final double bodyScale;
 
         // load available action sheets and measure the visible idle pose
         // alternate filenames handle differences between the supplied packs
@@ -75,7 +76,13 @@ public final class AssetPack {
                 if ((idle.getRGB(x, y) >>> 24) > 32) { left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y); }
             }
             body = right < left ? new Rectangle(0, 0, 100, 100) : new Rectangle(left, top, right - left + 1, bottom - top + 1);
+            // the lancer's upright spear extends above his helmet and inflated the measured height
+            // compensate for that extra reach while keeping the same foot anchor in every action
+            bodyScale = name.equals("Lancer") ? 1.30 : 1.0;
         }
+
+        // share body proportions with portraits without trimming the weapon from their artwork
+        public double bodyScale() { return bodyScale; }
 
         // return the number of horizontal frames in an action sheet
         // missing actions use the idle sheet as a safe fallback
@@ -126,7 +133,7 @@ public final class AssetPack {
             // use the idle body's anchor for every action, preserving attack reach and stable feet
             // match visible idle height, not the padded sheet or weapon width
             // keep this scale for every action so attacks never resize the actor
-            double scale = h / (double) body.height;
+            double scale = h * bodyScale / body.height;
             int size = (int) Math.round(100 * scale);
             double center = body.x + body.width / 2.0;
             int dx = (int) Math.round(x + w / 2.0 - (flip ? 100 - center : center) * scale);

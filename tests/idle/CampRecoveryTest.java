@@ -63,8 +63,17 @@ public final class CampRecoveryTest {
             JPanel view = ui.view(); view.setSize(1280, 900); layout(view);
             button(view, "<html>Lancer").doClick(); button(view, "Recruit ").doClick();
             check(button(view, "Close guide").getParent().isVisible(), "Recruit guide appears");
-            check(Boolean.TRUE.equals(button(view, "<html>Lancer").getClientProperty("guideGlow")), "Recruit is highlighted");
-            button(view, "Close guide").doClick(); button(view, "<html>Wizard").doClick();
+            check(Boolean.TRUE.equals(button(view, "<html>Wizard").getClientProperty("guideGlow")), "Full party guides selecting an active hero first");
+            button(view, "<html>Wizard").doClick();
+            check(Boolean.TRUE.equals(button(view, "Send to camp").getClientProperty("guideGlow")), "Selected active hero advances to freeing a slot");
+            button(view, "Send to camp").doClick();
+            check(Boolean.TRUE.equals(button(view, "<html>Lancer").getClientProperty("guideGlow")), "Free slot advances back to recruit selection");
+            button(view, "<html>Lancer").doClick();
+            check(Boolean.TRUE.equals(button(view, "Add to party").getClientProperty("guideGlow")), "Recruit selection advances to deployment");
+            button(view, "Add to party").doClick();
+            check(!button(view, "Close guide").getParent().isVisible(), "Deployment completes the sequence");
+            button(view, "<html>Soldier").doClick();
+            button(view, "Close guide").doClick(); button(view, "<html>Lancer").doClick();
             check(!button(view, "Close guide").getParent().isVisible(), "Dismissed guide stays closed after refresh");
             button(view, "<html>Knight").doClick(); button(view, "Shop").doClick(); button(view, "Buy for").doClick();
             check(Boolean.TRUE.equals(button(view, "Gear").getClientProperty("guideGlow")), "Purchase highlights Gear tab");
@@ -75,6 +84,22 @@ public final class CampRecoveryTest {
             } catch (Exception e) { throw new RuntimeException(e); }
             button(view, "Equip").doClick();
             check(!button(view, "Close guide").getParent().isVisible() && campaign.heroes.get(Catalog.Role.KNIGHT.ordinal()).gear.containsKey(Catalog.Slot.WEAPON), "Equip completes guide");
+            campaign.heroes.stream().filter(h -> h.active).forEach(h -> h.hp = 0);
+            campaign.rescueDowned();
+            IdleGame regroup = new IdleGame(campaign, new SaveStore(Paths.get("out", "camp-guide-test.properties")));
+            JPanel recovery = regroup.view();
+            check(button(recovery, "Close guide").getParent().isVisible(), "Empty party opens regrouping guide");
+            button(recovery, "Upgrades").doClick();
+            check(Boolean.TRUE.equals(button(recovery, "Party").getClientProperty("guideGlow")), "Regrouping guides navigation back to Party");
+            button(recovery, "Party").doClick(); button(recovery, "<html>Knight").doClick();
+            check(!button(recovery, "Recovering /").isEnabled(), "Recovering hero cannot be deployed early");
+            button(recovery, "Close guide").doClick();
+            button(recovery, "Upgrades").doClick();
+            check(!button(recovery, "Close guide").getParent().isVisible(), "Dismissed recovery guide stays closed on navigation");
+            button(recovery, "Party").doClick(); button(recovery, "<html>Wizard").doClick();
+            check(Boolean.TRUE.equals(button(recovery, "Add to party").getClientProperty("guideGlow")), "Ready replacement advances to Add to party");
+            button(recovery, "Add to party").doClick();
+            check(campaign.activeCount() == 1 && !button(recovery, "Close guide").getParent().isVisible(), "Replacement deployment finishes regrouping guidance");
         });
         Files.deleteIfExists(Paths.get("out", "camp-guide-test.properties"));
     }

@@ -8,7 +8,7 @@ Combat runs automatically. You choose who fights, how they grow, and what they c
 
 ## What's new in 1.5.0
 
-All updates below belong to **1.5.0**, from equipment icons through audio, camp recovery, and guides.
+All updates below belong to **1.5.0**, from equipment icons through audio, camp recovery, guides, named expeditions, and character scale polish.
 
 | Update | What changed |
 | --- | --- |
@@ -37,71 +37,86 @@ Weapon restrictions still apply, and equipped gear changes stats rather than cha
 
 ## Screenshots
 
-Earlier V1 gameplay screenshots, with additional previews of the management tabs. Some images show the old equipment icons, starter gear, or a "Found" reward message. The current build uses Raven equipment icons and shop-only equipment, with gold-only victory rewards. Select an image to view it at full size.
+Current **1.5.0** interface previews rendered from the game with isolated demo campaigns. Gold, stages, and party selections vary between examples. These are composed game screenshots, not downloadable asset sheets.
 
 ### Main menu
 
-This older screenshot shows the former separate continue/new buttons. The current menu has one **Play** button that opens the expedition library, alongside Settings, Credits, and Quit Game.
+Choose **Play** to open the expedition library, or access Settings, Credits, and Quit Game.
 
-![Dungeon Defenders main menu](docs/screenshots/main-menu.png)
+![Current main menu with a single Play button](docs/screenshots/main-menu.png)
+
+### Named expeditions
+
+Each framed card shows the campaign name, stage, gold, and party size. The gear button on its left opens Rename and Delete options. **New Expedition** prompts for a unique name without replacing another save.
+
+![Expedition library with named saves and left-side options buttons](docs/screenshots/campaign-selector.png)
 
 ### Battlefield and party
 
-Manage a four-member party while battles run automatically. The sidebar keeps your gold, selected hero, and management tabs together.
+The sidebar keeps gold, the selected hero, and management tabs together. This party includes the Lancer with corrected body scaling and his full spear visible.
 
-![Stage 19 victory with the Party tab open and healing effects on the battlefield](docs/screenshots/battlefield-party.png)
+![Lancer, Priest, Archer, and Knight facing a skeleton patrol](docs/screenshots/battlefield-party.png)
 
 <details>
-<summary>Combat and health indicators</summary>
+<summary>Camp recovery and party replacements</summary>
 
-Melee strikes and spells land on their targets, while hearts show each combatant's remaining health.
+Downed heroes leave their party slot and recover at camp over 30 seconds. The selected Knight is healing with 22 seconds remaining, while three allies continue fighting. Add a ready recruit or recovered hero manually through Party.
 
-![Party fighting Blood Monsters with targeted attack effects and heart indicators](docs/screenshots/combat.png)
+![Knight recovering at camp with a countdown and rescue notice](docs/screenshots/camp-recovery.png)
 
 </details>
 
 <details>
-<summary>Regrouping after defeat</summary>
+<summary>Equipment guides</summary>
 
-This older screenshot shows the regrouping notice. In the current build, downed heroes recover at camp for 30 seconds and must be added back manually. Gold, equipment, and progress are preserved.
+Purchases enter the shared inventory. A closable guide explains how to equip the item and highlights the next relevant controls.
 
-![Regrouping countdown before retrying stage 21](docs/screenshots/regrouping.png)
-
-</details>
-
-<details>
-<summary>Boss encounters and upgrades</summary>
-
-Every 25 stages introduces a boss. Upgrade individual stats to help the party push further, including stronger priest healing.
-
-![Stage 25 boss Gorath the Iron Warlord with the Priest's Upgrades tab open](docs/screenshots/boss.png)
+![Purchased equipment in the Gear tab with a closable guide](docs/screenshots/equipment-guide.png)
 
 </details>
 
 <details>
 <summary>Gear tab</summary>
 
-Manage the selected hero's weapon, hat, armor, and shoes. Equip compatible items from the shared stash.
+Manage class-compatible weapons, hats, armor, and shoes. Raven icons represent purchased equipment, including the Gold sword shown here. Equipment changes stats without replacing character artwork.
 
-![Gear tab showing equipment slots and equip controls](docs/screenshots/gear.png)
+![Gear tab with an equipped Gold sword and Raven equipment icon](docs/screenshots/gear.png)
 
 </details>
 
 <details>
 <summary>Shop tab</summary>
 
-Compare equipment prices, stats, and class requirements before spending gold.
+All new equipment comes from the Shop. Compare prices, bonuses, compatibility, and owned quantities before buying, then equip the purchase through Gear.
 
-![Shop tab showing equipment prices and the buy button](docs/screenshots/shop.png)
+![Current Shop tab with Raven icons and purchase guidance](docs/screenshots/shop.png)
 
 </details>
 
 <details>
 <summary>Upgrades tab</summary>
 
-Review current and next stats, then purchase separate damage, vitality, healing, or guard upgrades.
+Review current and next stats before purchasing separate damage, vitality, healing, or guard upgrades. Healing upgrades are available to the Priest.
 
-![Upgrades tab showing damage and vitality improvements](docs/screenshots/upgrades.png)
+![Knight upgrade options with current and next stats](docs/screenshots/upgrades.png)
+
+</details>
+
+<details>
+<summary>Combat and health indicators</summary>
+
+Attacks and healing effects appear on their targets. Stepped heart indicators show remaining health.
+
+![Targeted combat and healing effects against a beast patrol](docs/screenshots/combat.png)
+
+</details>
+
+<details>
+<summary>Boss encounters</summary>
+
+Every 25th stage introduces a boss. Boss encounters switch to the shared boss music theme and use creature-appropriate attack effects.
+
+![Party facing the Elite Orc boss on the battlefield](docs/screenshots/boss.png)
 
 </details>
 
@@ -180,6 +195,8 @@ A downed hero is automatically sent to camp and frees a party slot. Camp recover
 Recruits and recovered heroes stay at camp until you select them in **Party** and choose **Add to party**. If all four slots are occupied, send someone else to camp first. Surviving party members keep fighting. If the entire party falls, enemies reset to full HP and combat pauses on the same stage until you deploy a ready hero. No gold, equipment, or stage progress is lost.
 
 Closable guide cards explain recruitment and purchases, with golden highlights on the next useful controls. Buying equipment never equips it automatically. Close a guide to remove its highlights. Camp notices announce rescues and completed recovery, and roster cards show the remaining seconds.
+
+Guides advance after the relevant action: open the requested tab, select a hero, recruit or free a party slot if needed, then **Add to party**. Regrouping guides show recovery wait times and ready replacements, including after loading a save with an empty party. Equipment guidance continues from **Buy** through compatible hero selection, **Gear**, the item dropdown, and **Equip**. Only the current step's relevant controls are highlighted. Closing a guide dismisses the sequence until a new explicit action or camp event starts another one. If the sidebar is hidden, the guide first directs you to **Show party & gear**.
 
 Offline rewards provide gold for up to eight hours away. They do not advance stages or award equipment.
 

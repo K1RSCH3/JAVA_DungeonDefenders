@@ -52,12 +52,14 @@ public final class IdleGame {
     private Item guidedItem;
     private Hero guidedRecruit;
     private boolean shopGuide;
+    private boolean recoveryGuide;
+    private JButton expandControl;
     private int seenCampNotice;
     private long campClock;
 
     // dismiss guidance until a new purchase, recruitment, or camp event occurs
     private void closeGuide() {
-        guidedItem = null; guidedRecruit = null; shopGuide = false; prompt.setVisible(false); clearGlow(); root.revalidate(); root.repaint();
+        guidedItem = null; guidedRecruit = null; shopGuide = false; recoveryGuide = false; prompt.setVisible(false); clearGlow(); root.revalidate(); root.repaint();
     }
 
     // keep next-step highlights separate from ordinary selection and hover states
@@ -67,6 +69,8 @@ public final class IdleGame {
         for (JButton b : equip) if (b != null) b.putClientProperty("guideGlow", false);
         deploy.putClientProperty("guideGlow", false); train.putClientProperty("guideGlow", false);
         buy.putClientProperty("guideGlow", false);
+        if (expandControl != null) expandControl.putClientProperty("guideGlow", false);
+        if (choices != null) for (JComboBox<Item> choice : choices) if (choice != null) choice.setBorder(UiSkin.border());
     }
 
     // show a nonblocking instruction card that the player can close at any time
@@ -74,29 +78,70 @@ public final class IdleGame {
         promptText.setText("<html>" + text + "</html>"); prompt.setVisible(true); root.revalidate();
     }
 
-    // guide recruitment and purchases without automatically deploying or equipping
+    // advance instructions from current game and interface state instead of a timed slideshow
+    // only the next relevant control glows and unrelated clicks cannot complete a step
     private void refreshGuide() {
         clearGlow();
         if (!prompt.isVisible()) return;
-        if (guidedRecruit != null) {
-            if (guidedRecruit.level == 0) {
-                guide("Recruit " + guidedRecruit.role.label + " for " + (int) state.levelCost(guidedRecruit) + " gold.<br>Recruitment unlocks the hero at camp. You choose when to add them to the party.");
-                train.putClientProperty("guideGlow", selected == guidedRecruit); return;
+        if (expandControl != null && expandControl.getText().equals("Show party & gear")) {
+            step("Open controls", "Click Show party & gear to reach the next action", expandControl); return;
+        }
+        if (guidedItem != null) {
+            if (!selected.role.accepts(guidedItem) || selected.level == 0) {
+                if (tabs.getSelectedIndex() != 0) { step("Equipment / 1", "Open Party to choose a hero who can use " + guidedItem.name, navigationButtons[0]); return; }
+                if (selected.role.accepts(guidedItem) && selected.level == 0) {
+                    step("Equipment / 2", "Recruit " + selected.role.label + " first. " + (train.isEnabled() ? "Click Recruit" : "Earn more gold to recruit this hero"), train); return;
+                }
+                guide("Equipment / 2<br>Select a compatible hero in Party for " + guidedItem.name);
+                for (Hero h : state.heroes) if (h.role.accepts(guidedItem)) roster[h.role.ordinal()].putClientProperty("guideGlow", true);
+                return;
             }
-            if (guidedRecruit.active) { closeGuide(); return; }
-            guide(guidedRecruit.role.label + " recruited and waiting at camp.<br>Select them in Party, then Add to party. If full, send another hero to camp first.");
-            navigationButtons[0].putClientProperty("guideGlow", true);
-            roster[guidedRecruit.role.ordinal()].putClientProperty("guideGlow", true);
-            if (selected == guidedRecruit || (state.activeCount() == 4 && selected.active)) deploy.putClientProperty("guideGlow", true);
-        } else if (guidedItem != null) {
-            boolean compatible = selected.level > 0 && selected.role.accepts(guidedItem);
-            guide("Bought " + guidedItem.name + ". " + (compatible ? "Open Gear, choose it in the " + guidedItem.slot.name().toLowerCase() + " slot, then Equip." : "Choose a recruited hero who can use it, then open Gear and Equip.") + "<br>Purchases go into shared inventory. They are not equipped automatically.");
-            navigationButtons[compatible ? 1 : 0].putClientProperty("guideGlow", true);
-            if (compatible) equip[guidedItem.slot.ordinal()].putClientProperty("guideGlow", true);
-            else { for (Hero h : state.heroes) if (h.role.accepts(guidedItem)) roster[h.role.ordinal()].putClientProperty("guideGlow", true); if (selected.level == 0 && selected.role.accepts(guidedItem)) train.putClientProperty("guideGlow", true); }
-        } else if (shopGuide) { guide("Select an item in Shop, then press Buy.<br>After buying, choose a compatible hero and open Gear to equip it."); buy.putClientProperty("guideGlow", true); }
+            if (tabs.getSelectedIndex() != 1) { step("Equipment / 3", "Open Gear for " + selected.role.label, navigationButtons[1]); return; }
+            int slot = guidedItem.slot.ordinal();
+            if (choices[slot].getSelectedItem() != guidedItem) {
+                guide("Equipment / 4<br>Choose " + guidedItem.name + " in the " + guidedItem.slot.name().toLowerCase() + " dropdown");
+                choices[slot].setBorder(BorderFactory.createLineBorder(GOLD, 2)); return;
+            }
+            step("Equipment / 5", "Click Equip beneath " + guidedItem.name + " to finish", equip[slot]); return;
+        }
+        if (guidedRecruit != null || recoveryGuide) {
+            if (guidedRecruit != null && guidedRecruit.active) { closeGuide(); return; }
+            if (tabs.getSelectedIndex() != 0) { step("Party / 1", "Open Party to choose a recruit or a ready hero at camp", navigationButtons[0]); return; }
+            if (guidedRecruit == null) {
+                boolean ready = state.heroes.stream().anyMatch(h -> !h.active && h.level > 0 && h.recoverySeconds == 0 && h.hp > 0);
+                int wait = state.heroes.stream().filter(h -> h.recoverySeconds > 0).mapToInt(h -> h.recoverySeconds).min().orElse(0);
+                guide("Regrouping / 2<br>" + (ready ? "Select a highlighted ready hero at camp" : "Heroes are recovering" + (wait > 0 ? " - next ready in " + wait + "s" : "") + ". Wait, or select an unrecruited class to recruit"));
+                for (Hero h : state.heroes) if (!h.active && (ready ? h.level > 0 && h.recoverySeconds == 0 && h.hp > 0 : h.level == 0 && state.gold >= state.levelCost(h))) roster[h.role.ordinal()].putClientProperty("guideGlow", true);
+                return;
+            }
+            if (state.activeCount() == 4 && guidedRecruit.level > 0) {
+                if (selected.active) step("Party / Make room", "Click Send to camp to free one slot, then select " + guidedRecruit.role.label, deploy);
+                else {
+                    guide("Party / Make room<br>All four slots are occupied. Select an active hero to send to camp first");
+                    for (Hero h : state.heroes) if (h.active) roster[h.role.ordinal()].putClientProperty("guideGlow", true);
+                }
+                return;
+            }
+            if (selected != guidedRecruit) { step("Party / 2", "Select " + guidedRecruit.role.label + " in the roster", roster[guidedRecruit.role.ordinal()]); return; }
+            if (selected.level == 0) { step("Party / 3", train.isEnabled() ? "Click Recruit to unlock " + selected.role.label : "Earn more gold before recruiting " + selected.role.label, train); return; }
+            if (selected.recoverySeconds > 0) {
+                guide("Party / Recovering<br>" + selected.role.label + " will be ready in " + selected.recoverySeconds + "s. Wait here or select another ready hero"); return;
+            }
+            step("Party / 4", "Click Add to party to deploy " + selected.role.label + ". Recovery never deploys heroes automatically", deploy); return;
+        }
+        if (shopGuide) {
+            if (tabs.getSelectedIndex() != 2) { step("Shopping / 1", "Open Shop to choose equipment", navigationButtons[2]); return; }
+            Item item = shop.getSelectedValue();
+            if (item == null) { guide("Shopping / 2<br>Select an item in the shop list to review its price and bonuses"); return; }
+            step("Shopping / 2", "Selected: " + item.name + ". " + (buy.isEnabled() ? "Click Buy, then follow the equipment guide" : "Earn more gold or select an affordable item"), buy);
+        }
     }
 
+    // show one actionable instruction and avoid highlighting controls that cannot currently be used
+    private void step(String title, String text, JButton next) {
+        guide(title + "<br>" + text);
+        if (next != null && next.isEnabled()) next.putClientProperty("guideGlow", true);
+    }
 
     // share menu audio with the battlefield instead of opening a second music player
     public void setAudio(GameAudio audio) { this.audio = audio; battlefield.setAudio(audio); }
@@ -115,6 +160,7 @@ public final class IdleGame {
         resources.setIcon(UiSkin.icon(3, 4, 28));
         JPanel headerActions = panel(new FlowLayout(FlowLayout.RIGHT, 14, 0));
         JButton expand = button("Expand battlefield"); headerActions.add(expand); header.add(headerActions, BorderLayout.EAST);
+        expandControl = expand;
         prompt.setBorder(new EmptyBorder(12, 16, 12, 16)); promptText.setFont(font(16)); promptText.setForeground(TEXT);
         JButton dismiss = button("Close guide"); dismiss.addActionListener(e -> closeGuide());
         prompt.add(promptText, BorderLayout.CENTER); prompt.add(dismiss, BorderLayout.EAST); prompt.setVisible(false);
@@ -139,7 +185,7 @@ public final class IdleGame {
             JButton card = button(""); roster[h.role.ordinal()] = card; card.setHorizontalAlignment(SwingConstants.LEFT);
             card.setIcon(new ImageIcon(PixelArt.portrait(h.role)));
             card.setBorder(new EmptyBorder(12, 16, 12, 16));
-            card.setIconTextGap(9); card.addActionListener(e -> { selected = h; bagSignature = ""; if (h.level == 0 && guidedItem == null) { guidedRecruit = h; guide("Recruitment"); } refresh(); }); cards.add(card);
+            card.setIconTextGap(9); card.addActionListener(e -> { selected = h; bagSignature = ""; if (guidedItem == null && !h.active) { guidedRecruit = h; shopGuide = false; guide("Party guidance"); } refresh(); }); cards.add(card);
         }
         cards.setBorder(new EmptyBorder(8, 6, 8, 6));
         cards.setPreferredSize(new Dimension(320, 860)); JScrollPane rosterScroll = new JScrollPane(cards); rosterScroll.getViewport().setBackground(BG); rosterScroll.getVerticalScrollBar().setUnitIncrement(24); rosterBlock.add(rosterScroll, BorderLayout.CENTER);
@@ -184,7 +230,7 @@ public final class IdleGame {
         train.addActionListener(e -> {
             if (selected.level == 0) {
                 Hero recruited = selected;
-                if (change(() -> state.train(recruited))) { guidedItem = null; guidedRecruit = recruited; guide("Recruit ready"); refreshGuide(); }
+                if (change(() -> state.train(recruited))) { if (guidedItem == null) guidedRecruit = recruited; guide("Recruit ready"); refreshGuide(); }
             } else tabs.setSelectedIndex(3);
         });
         deploy.addActionListener(e -> change(() -> state.toggle(selected)));
@@ -204,7 +250,7 @@ public final class IdleGame {
             });
             row.add(choices[i]);
             JPanel buttons = panel(new GridLayout(1, 2, 6, 0)); equip[i] = button("Equip"); remove[i] = button("Remove");
-            choices[i].addActionListener(e -> equip[i].setEnabled(selected.level > 0 && choices[i].getSelectedItem() != null));
+            choices[i].addActionListener(e -> { equip[i].setEnabled(selected.level > 0 && choices[i].getSelectedItem() != null); refreshGuide(); });
             equip[i].addActionListener(e -> { Item item = (Item) choices[i].getSelectedItem(); if (item != null && change(() -> state.equip(selected, item)) && item == guidedItem) closeGuide(); });
             remove[i].addActionListener(e -> change(() -> state.unequip(selected, slot)));
             buttons.add(equip[i]); buttons.add(remove[i]); row.add(buttons); gear.add(row);
@@ -225,7 +271,7 @@ public final class IdleGame {
                 cell.setBorder(new EmptyBorder(9, 7, 9, 7)); cell.setBackground(sel ? new Color(0x373445) : PANEL); cell.setForeground(sel ? GOLD : TEXT); return cell;
             }
         });
-        shop.setSelectedIndex(0); shop.addListSelectionListener(e -> refreshBuy()); forge.add(new JScrollPane(shop), BorderLayout.CENTER);
+        shop.setSelectedIndex(0); shop.addListSelectionListener(e -> { refreshBuy(); refreshGuide(); }); forge.add(new JScrollPane(shop), BorderLayout.CENTER);
         buy.addActionListener(e -> { Item item = shop.getSelectedValue(); if (item != null && change(() -> state.buy(item))) { guidedRecruit = null; guidedItem = item; guide("Equipment purchased"); if (selected.level > 0 && selected.role.accepts(item)) choices[item.slot.ordinal()].setSelectedItem(item); refreshGuide(); } }); forge.add(buy, BorderLayout.SOUTH);
         tabs.addTab("Shop", forge);
         JPanel training = panel(new GridLayout(4, 1, 0, 10)); training.setBorder(new EmptyBorder(14, 8, 8, 8));
@@ -256,6 +302,7 @@ public final class IdleGame {
         }
         tabs.addChangeListener(e -> {
             for (int i = 0; i < 4; i++) { navigationButtons[i].putClientProperty("selectedHero", tabs.getSelectedIndex() == i); navigationButtons[i].repaint(); }
+            refreshGuide();
         });
         JPanel management = panel(new BorderLayout(0, 8)); management.add(navigation, BorderLayout.NORTH); management.add(tabs, BorderLayout.CENTER);
         sidebar.add(management, BorderLayout.CENTER);
@@ -264,9 +311,10 @@ public final class IdleGame {
         guide.setText(hints[0]); tabs.addChangeListener(e -> guide.setText(hints[tabs.getSelectedIndex()]));
         guide.setBorder(new EmptyBorder(4, 6, 2, 6)); sidebar.add(guide, BorderLayout.SOUTH);
         body.add(sidebar, BorderLayout.EAST); root.add(body, BorderLayout.CENTER);
-        expand.addActionListener(e -> { sidebar.setVisible(!sidebar.isVisible()); expand.setText(sidebar.isVisible() ? "Expand battlefield" : "Show party & gear"); body.revalidate(); body.repaint(); });
+        expand.addActionListener(e -> { sidebar.setVisible(!sidebar.isVisible()); expand.setText(sidebar.isVisible() ? "Expand battlefield" : "Show party & gear"); refreshGuide(); body.revalidate(); body.repaint(); });
         JPanel footer = panel(new BorderLayout(10, 0)); event.setForeground(GOLD); event.setFont(font(11)); footer.add(event, BorderLayout.CENTER);
         saveStatus.setForeground(MUTED); saveStatus.setFont(font(10)); footer.add(saveStatus, BorderLayout.EAST); root.add(footer, BorderLayout.SOUTH);
+        if (state.activeCount() == 0) { recoveryGuide = true; guide("Regrouping"); }
         refresh();
     }
 
@@ -384,7 +432,7 @@ public final class IdleGame {
         }
         if (state.campNoticeSerial != seenCampNotice) {
             seenCampNotice = state.campNoticeSerial;
-            if (guidedItem == null && guidedRecruit == null) guide(state.campNotice);
+            if (guidedItem == null && guidedRecruit == null) { recoveryGuide = true; shopGuide = false; guide(state.campNotice); }
         }
         refreshGuide();
         bagSignature = signature; refreshBuy(); root.repaint(); event.setText(state.message); battlefield.repaint();

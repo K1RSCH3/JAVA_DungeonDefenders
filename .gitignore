@@ -28,6 +28,9 @@ save-*.tmp
 !/docs/screenshots/combat.png
 !/docs/screenshots/regrouping.png
 !/docs/screenshots/boss.png
+!/docs/screenshots/campaign-selector.png
+!/docs/screenshots/camp-recovery.png
+!/docs/screenshots/equipment-guide.png
 
 # keep asset archives and packaged builds local
 *.zip

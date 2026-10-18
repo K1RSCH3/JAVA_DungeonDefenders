@@ -39,21 +39,29 @@ public final class PixelArt {
         portraits.put(role, source); return source;
     }
 
-    /** a shared visible height lets even the widest weapon fit without cropping or distortion */
-    // fit all classes to a shared visible height based on the widest portrait
-    // center the result so long swords and bows stay inside the same frame
+    // compare body heights rather than letting an upright spear make its wielder look smaller
+    // reserve enough room for every full weapon so portraits still fit without cropping
     public static void drawPortrait(Graphics2D graphics, Role role, int x, int y, int width, int height) {
-        double widest = 1;
+        double widest = 1, tallest = 1;
         for (Role member : Role.values()) {
             BufferedImage source = portraitSource(member);
-            widest = Math.max(widest, source.getWidth() / (double) source.getHeight());
+            double proportion = portraitBodyScale(member);
+            widest = Math.max(widest, proportion * source.getWidth() / source.getHeight());
+            tallest = Math.max(tallest, proportion);
         }
         BufferedImage source = portraitSource(role);
-        int h = Math.max(1, (int) Math.floor(Math.min(height, width / widest)));
+        int h = Math.max(1, (int) Math.floor(Math.min(height / tallest, width / widest) * portraitBodyScale(role)));
         int w = Math.max(1, (int) Math.floor(h * source.getWidth() / (double) source.getHeight()));
         Graphics2D g = (Graphics2D) graphics.create();
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.drawImage(source, x + (width - w) / 2, y + (height - h) / 2, w, h, null); g.dispose();
+    }
+
+    // apply pack-specific proportions only to pack artwork and leave custom overrides unchanged
+    private static double portraitBodyScale(Role role) {
+        if (Files.exists(Paths.get("assets", "characters", role.sprite() + ".png"))) return 1;
+        AssetPack.Actor actor = AssetPack.actor("characters", role.sprite());
+        return actor == null ? 1 : actor.bodyScale();
     }
 
     // load a custom sprite or create placeholder art when needed
