@@ -67,7 +67,7 @@ public final class GameState {
     public String campNotice = "";
     public int campNoticeSerial;
 
-    // remove downed fighters without discarding gear or progress
+    // remove downed fighters without discarding gold, upgrades, or gear
     // automatic rescue may empty the party even though manual removal keeps one fighter
     public void rescueDowned() {
         List<String> rescued = new ArrayList<>();
@@ -77,8 +77,18 @@ public final class GameState {
         }
         if (!rescued.isEmpty()) {
             campNotice = String.join(", ", rescued) + " sent to camp. Recovering for 30 seconds. Add a ready hero from Party.";
+            if (activeCount() == 0) {
+                // a boss wipe retreats once so the recovered party can earn gold from earlier patrols
+                // ordinary defeats and partial boss losses keep their current stage
+                if (boss()) {
+                    int bossStage = stage;
+                    stage = Math.max(1, stage - 5);
+                    campNotice = "Defeated at boss stage " + bossStage + ". Retreating to stage " + stage
+                        + " to earn upgrade gold. Heroes recover at camp for 30 seconds. Add a ready hero from Party.";
+                }
+                enemyHp = enemyMaxHp(); rest = 5;
+            }
             campNoticeSerial++; message = campNotice;
-            if (activeCount() == 0) { enemyHp = enemyMaxHp(); rest = 5; }
         }
     }
 
@@ -257,7 +267,7 @@ public final class GameState {
     public void addGold(double amount) { gold = Math.min(MAX_GOLD, gold + amount); }
 
     // resolve one combat round or one regrouping countdown step
-    // healing and damage create visual events, victories advance the stage, and failed attempts recover on the same stage
+    // victories advance the stage while full boss defeats retreat five stages for another upgrade opportunity
     public void tick() {
         ticks = (ticks + 1) % 1000000; lastDamage = 0; lastHealing = 0; combatEvents.clear();
         boolean hadParty = activeCount() > 0;

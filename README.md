@@ -32,7 +32,7 @@ Weapon restrictions still apply, and equipped gear changes stats rather than cha
 - **Animated pixel art** with character actions, targeted combat effects, heart indicators, and scrolling scenery
 - **Audio** with role-based combat effects, creature-family cues, dungeon music, boss music, and separate volume controls
 - **Persistent progress** with automatic saving and up to eight hours of offline gold
-- **Camp recovery** sends downed heroes to camp for 30 seconds, freeing party slots without losing gold, gear, or stage progress
+- **Camp recovery** sends downed heroes to camp for 30 seconds, freeing party slots without losing gold or gear. Full boss defeats retreat five stages to farm upgrade gold
 - **Dismissible guides** highlight recruitment, shopping, deployment, and equipment steps
 
 ## Screenshots
@@ -192,7 +192,7 @@ Enemy health and damage increase with the stage. Normal patrols contain four ene
 
 A downed hero is automatically sent to camp and frees a party slot. Camp recovery takes **30 seconds**, gradually restores HP, and continues while the game is closed. Injured heroes you manually send to camp also recover there. Recovering heroes cannot be deployed until their countdown finishes.
 
-Recruits and recovered heroes stay at camp until you select them in **Party** and choose **Add to party**. If all four slots are occupied, send someone else to camp first. Surviving party members keep fighting. If the entire party falls, enemies reset to full HP and combat pauses on the same stage until you deploy a ready hero. No gold, equipment, or stage progress is lost.
+Recruits and recovered heroes stay at camp until you select them in **Party** and choose **Add to party**. If all four slots are occupied, send someone else to camp first. Surviving party members keep fighting. If the entire party falls during a normal patrol, enemies reset to full HP on the same stage. A full-party defeat at a boss retreats **five stages** instead, such as stage 25 back to stage 20, so you can defeat earlier patrols and earn upgrade gold. Heroes still recover at camp and must be deployed manually. Gold, equipment, and upgrades are retained. Partial party losses do not trigger retreat.
 
 Closable guide cards explain recruitment and purchases, with golden highlights on the next useful controls. Buying equipment never equips it automatically. Close a guide to remove its highlights. Camp notices announce rescues and completed recovery, and roster cards show the remaining seconds.
 

@@ -25,6 +25,21 @@ public final class CampRecoveryTest {
 
     // cover partial recovery, manual replacements, empty parties, and persisted countdowns
     static void run() throws Exception {
+        // a partial loss cannot trigger retreat and repeated rescue checks cannot retreat again
+        GameState bossWipe = new GameState(); bossWipe.stage = 25; bossWipe.enemyHp = bossWipe.enemyMaxHp();
+        double retainedGold = bossWipe.gold;
+        bossWipe.heroes.get(Catalog.Role.KNIGHT.ordinal()).hp = 0; bossWipe.rescueDowned();
+        check(bossWipe.stage == 25, "Partial boss loss keeps stage");
+        bossWipe.heroes.stream().filter(h -> h.active).forEach(h -> h.hp = 0);
+        bossWipe.rescueDowned();
+        check(bossWipe.stage == 20 && bossWipe.enemyHp == bossWipe.enemyMaxHp() && !bossWipe.boss(), "Boss wipe resets an earlier patrol");
+        check(bossWipe.gold == retainedGold && bossWipe.kills == 0 && bossWipe.activeCount() == 0, "Retreat grants no victory reward or automatic deployment");
+        bossWipe.rescueDowned(); check(bossWipe.stage == 20, "Retreat happens only once");
+        bossWipe.advanceCamp(30);
+        check(bossWipe.toggle(bossWipe.heroes.get(Catalog.Role.KNIGHT.ordinal())), "Recovered hero can rejoin after retreat");
+        for (int i = 0; i < 5; i++) bossWipe.tick();
+        bossWipe.enemyHp = 1; bossWipe.tick();
+        check(bossWipe.stage == 21 && bossWipe.gold > retainedGold, "Earlier patrol victories earn upgrade gold");
         GameState state = new GameState(); state.gold = 10000;
         GameState.Hero knight = state.heroes.get(Catalog.Role.KNIGHT.ordinal());
         knight.hp = 0; state.rescueDowned();

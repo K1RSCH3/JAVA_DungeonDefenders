@@ -28,8 +28,8 @@ Equipment, audio, camp recovery, and guidance update, recorded on October 19, 20
 - Downed heroes automatically return to camp and heal over 30 seconds, freeing party slots
 - Injured heroes sent to camp manually also recover there
 - Recruits and recovered heroes wait for the player to add them to the party
-- Full-party defeat pauses progression on the same stage without losing gold or equipment
-- Surviving heroes continue fighting. After a full defeat, enemies reset to full HP and the player must deploy a ready hero to resume
+- Full-party defeat on a normal stage pauses there. A boss wipe retreats five stages to earn upgrade gold, retaining gold, equipment, and upgrades
+- Surviving heroes continue fighting. After a full defeat, enemies reset to full HP at the retry stage and the player must deploy a ready hero to resume
 - Recovery continues offline and is stored in save format 4, with support for older save formats 1–3
 - Kept the game version at 1.5.0, independent of the internal save-format number
 

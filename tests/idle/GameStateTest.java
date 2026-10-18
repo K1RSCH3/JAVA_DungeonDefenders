@@ -86,7 +86,7 @@ public final class GameStateTest {
         check(battle.heroes.stream().filter(h -> h.level > 0).allMatch(h -> h.hp == h.maxHp() && h.recoverySeconds == 0), "Camp recovery heals recruited heroes");
         GameState wall = new GameState(); wall.stage = 1000; wall.enemyHp = wall.enemyMaxHp();
         for (int i = 0; i < 250; i++) wall.tick();
-        check(wall.stage == 1000 && wall.kills == 0 && wall.gold == 120 && wall.inventory.isEmpty(), "Underpowered party cannot chip past a stage across retries or earn victory rewards");
+        check(wall.stage == 995 && wall.kills == 0 && wall.gold == 120 && wall.inventory.isEmpty(), "Underpowered boss party retreats once without earning victory rewards");
         GameState scaling = new GameState(); scaling.stage = 10;
         double earlyHp = scaling.enemyMaxHp(), earlyDamage = scaling.enemyStrikeDamage(); scaling.stage = 20;
         check(scaling.enemyMaxHp() > earlyHp && scaling.enemyStrikeDamage() > earlyDamage, "Normal HP and damage grow with stage");
