@@ -134,7 +134,7 @@ public final class IdleGame {
                 // include the item icon and the information needed before equipping or buying
                 @Override public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean sel, boolean focus) {
                     JLabel label = (JLabel) super.getListCellRendererComponent(list, value == null ? "No gear owned - buy in Shop" : value, index, sel, focus);
-                    label.setIcon(value instanceof Item ? UiSkin.itemIcon((Item) value, 18) : null); return label;
+                    label.setIcon(value instanceof Item ? UiSkin.itemIcon((Item) value, 32) : null); return label;
                 }
             });
             row.add(choices[i]);

@@ -1,8 +1,20 @@
 # Changelog
 
+## V1.5 — 1.5.0
+
+Equipment and icon update, recorded on October 19, 2026.
+
+- Made equipment available only through shop purchases, removing starter weapons and patrol/boss drops for new campaigns while preserving existing gear
+
+- Added 27 selected Raven equipment icons to the shop, gear slots, and inventory choices
+- Matched equipment visuals to Iron, Gold, and Crystal tiers while preserving saved IDs and existing stat scaling
+- Added asset mapping and equipment progression checks
+- Retained class-specific weapon restrictions and compatibility with existing saves
+
+
 ## V1 — 1.0.0
 
-The first playable version of Dungeon Defenders establishes the core party, combat, equipment, and progression systems. This entry records the current feature baseline for future revisions.
+The first playable version of Dungeon Defenders established the core party, combat, equipment, and progression systems. This is a historical baseline. See V1.5 above and the README for current behavior.
 
 ### Overview
 
@@ -13,7 +25,7 @@ Dungeon Defenders is a medieval dark-fantasy idle RPG built with Java, Swing, an
 - **Party building:** recruit from nine classes — Lancer, Wizard, Priest, Archer, Soldier, Knight, Knight Templar, Swordsman, and Armored Axeman. Swap heroes between camp and a four-member active party.
 - **Automatic combat:** melee fighters, archers, casters, and healers act with role-based timing and effects directed at their targets.
 - **Enemy encounters:** fight four-enemy patrols grouped by species, with stage-scaled health and damage. The roster includes skeletons, orcs, demons, beasts, and other creatures.
-- **Boss stages:** face a named boss every 25 stages, with stronger stats and guaranteed equipment rewards.
+- **Boss stages:** face a named boss every 25 stages with stronger stats. The original equipment rewards were removed by the shop-only equipment update listed above.
 - **Individual upgrades:** improve attack or spell damage, maximum HP, guard, and priest healing through separate upgrade tracks.
 - **Equipment and shopping:** buy and manage class-compatible weapons, hats, armor, and shoes using a shared inventory. Equipment improves stats without changing sprite appearances.
 - **Progression without permanent defeat:** defeated parties regroup and retry the current stage while retaining gold, equipment, and progress.

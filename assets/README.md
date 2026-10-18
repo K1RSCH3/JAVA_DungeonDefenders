@@ -1,5 +1,7 @@
 # Asset setup and credits
 
+This guide covers **V1.5 (1.5.0)**, including the 27 selected Raven equipment icons added after V1. Raw asset packs remain local and are not included in the repository.
+
 Dungeon Defenders uses third-party character sprites, scenery, UI artwork, and a font. **These files are not included in the repository.** The full character packs are paid assets and must be obtained separately. All third-party assets remain local, including the free UI pack and font.
 
 ## Sources
@@ -10,6 +12,7 @@ Dungeon Defenders uses third-party character sprites, scenery, UI artwork, and a
 | Characters and enemies | [Tiny RPG Character Asset Pack 02 by Zerie](https://zerie.itch.io/tiny-rpg-character-asset-pack-02) | Twenty additional enemies |
 | Background | [Gothicvania Cold Corridors by Ansimuz](https://ansimuz.itch.io/gothicvania-cold-corridors) | Corridor layers, floor tiles, and animated torches |
 | User interface | [Free Medieval Fantasy UI Pack by Kibyra](https://kibyra.itch.io/free-medieval-fantasy-ui-pack) | Panels, buttons, tabs, hearts, coins, and equipment icons |
+| Equipment | [Raven Fantasy Icons by Clockwork Raven](https://clockworkraven.itch.io/raven-fantasy-icons) | Selected weapon, helm, armor, and boot icons |
 | Font | [Pixelta on DaFont](https://www.dafont.com/pixelta.font) | Menu and gameplay text |
 
 Consult the source pages and documents supplied with each download for usage terms. Keep those documents with your local copies. Credits and links do not include or grant access to the asset files.
@@ -20,7 +23,8 @@ Consult the source pages and documents supplied with each download for usage ter
 2. Extract the character packs, background, and UI pack into `assets/packs/`, using the directory names below.
 3. Place the font at `assets/fonts/Pixelta.ttf`. An operating-system font installation is not required.
 4. Keep each pack's internal filenames and folder structure intact. Avoid an extra nested archive folder between the named pack folder and its contents.
-5. Restart the game after adding or replacing assets. Loaded images are cached during a session.
+5. Install the 27 selected Raven PNGs using the Equipment icons section below. These are required by the asset tests, with fallback icons available during gameplay.
+6. Restart the game after adding or replacing assets. Loaded images are cached during a session.
 
 Expected layout, relative to the project root:
 
@@ -47,6 +51,9 @@ assets/
       UI Icons 2/
       UI Icons 3/
       ... remaining original pack contents ...
+    Free - Raven Fantasy Icons/
+      Selected/
+        ... the 27 selected fa icons listed below ...
   characters/
     ... optional custom hero PNGs ...
   enemies/
@@ -68,6 +75,28 @@ Only this README is tracked under `assets/`. Local packs, fonts, and custom spri
 **Font:** Pixelta is loaded directly from its local TTF file. If unavailable, the game uses a system serif font.
 
 Some missing character and background art has placeholder fallbacks. **Required medieval UI images do not:** a missing image raises a `Missing medieval UI asset` error. A fresh clone therefore needs the local assets before the full interface and asset-dependent tests can run.
+
+## Equipment icons
+
+The locally supplied `Free - Raven Fantasy Icons.zip` provides 27 selected icons. Only the chosen 16 x 16 PNGs are extracted into `assets/packs/Free - Raven Fantasy Icons/Selected/`. All other archive artwork is unused. These files remain excluded from Git.
+
+| Equipment | Iron / tier 1 | Gold / tier 2 | Crystal / tier 3 |
+| --- | --- | --- | --- |
+| Sword | fa1443 | fa1523 | fa1603 |
+| Spear | fa1463 | fa1543 | fa1623 |
+| Axe | fa1466 | fa1546 | fa1626 |
+| Bow | fa1514 | fa1594 | fa1674 |
+| Staff | fa1492 | fa1572 | fa1652 |
+| Wand | fa1494 | fa1574 | fa1654 |
+| Helm (hat slot) | fa1905 | fa1911 | fa1831 |
+| Armor | fa1921 | fa1927 | fa1873 |
+| Boots | fa1937 | fa1943 | fa2161 |
+
+Each identifier refers to a `.png` in the archive's `Separated Files/16x16/` folder. Copy those files into `Selected/` without renaming them. Silver or basic equipment represents Iron, warm gold represents the middle tier, and blue crystal-style equipment represents the strongest tier. Material names are game assignments based on appearance.
+
+Prices remain 35, 240, and 1,200 gold. Weapon power, gear HP, armor guard, and shoe speed bonuses increase with tier. Existing saved item IDs are unchanged, so previously owned Runebound and Eclipse items now display as Gold and Crystal without losing their stats or ownership.
+
+The icons appear in equipped slots, inventory choices, and the shop. They do not replace weapons or clothing baked into character animations. If a selected icon is missing, the game uses its medieval UI slot icon instead. Asset tests require all 27 selected files.
 
 ## Check the installation
 
@@ -147,4 +176,4 @@ flame_golem.png
 warlock.png
 ```
 
-Enemies share several procedural placeholder body types until their PNGs are supplied. Normal encounters group enemies by species, and health and damage scale with stage. Enemy-specific skills are not implemented yet.
+The installed character packs supply the enemy artwork. Procedural placeholders are used when matching artwork is unavailable. Normal encounters group enemies by species, and health and damage scale with stage. Dedicated enemy skill systems remain a possible future addition.

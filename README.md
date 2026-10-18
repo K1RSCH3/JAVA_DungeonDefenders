@@ -1,24 +1,26 @@
 # Dungeon Defenders
 
-**Current version: V1 (1.0.0)** — the first playable version. See the [V1 release notes](CHANGELOG.md) for the feature baseline.
+**Current version: V1.5 (1.5.0)** — the equipment and icon update. See the [changelog](CHANGELOG.md) for V1.5 changes and the original V1 baseline.
 
 A medieval dark-fantasy idle RPG built with **Java, Swing, and Java2D**. Assemble a party of four, battle through a haunted corridor, and spend your rewards on the upgrades and equipment needed to reach the next stage.
 
 Combat runs automatically. You choose who fights, how they grow, and what they carry.
 
-## V1 features
+V1.5 adds 27 Raven equipment icons, Iron / Gold / Crystal visuals, and shop-only equipment acquisition. Class-specific weapon restrictions and existing saved gear are preserved.
+
+## Current features
 
 - **Nine recruitable classes** with melee, ranged, magic, and healing roles
 - **Four-enemy patrols** grouped by species, with a boss every 25 stages
 - **Separate upgrades** for attack or spell damage, maximum HP, healing, and guard
-- **Equipment management** with class-specific weapons, hats, armor, and shoes
+- **Shop-only equipment** with class-specific weapons, hats, armor, and shoes. New campaigns start with empty equipment slots
 - **Animated pixel art** with character actions, targeted combat effects, heart indicators, and scrolling scenery
 - **Persistent progress** with automatic saving and up to eight hours of offline gold
 - **Recoverable defeats** that retry the current stage without taking away your gold, gear, or progress
 
 ## Screenshots
 
-V1 gameplay screenshots, with additional previews of the management tabs. Select an image to view it at full size.
+Earlier V1 gameplay screenshots, with additional previews of the management tabs. Some images show the old equipment icons, starter gear, or a "Found" reward message. The current build uses Raven equipment icons and shop-only equipment, with gold-only victory rewards. Select an image to view it at full size.
 
 ### Main menu
 
@@ -117,7 +119,7 @@ java -cp out idle.IdleGame
 
 ## Playing
 
-Start a **New Expedition**, or choose **Continue Expedition** to resume a save and collect offline gold. New expeditions begin with a Knight, Wizard, Priest, and Archer, plus 120 gold.
+Start a **New Expedition**, or choose **Continue Expedition** to resume a save and collect offline gold. New expeditions begin with a Knight, Wizard, Priest, and Archer, plus 120 gold and empty equipment slots. Heroes can fight without equipment. Existing saves retain previously owned gear.
 
 Use the management panel beside the battlefield:
 
@@ -148,9 +150,11 @@ Each hero has four equipment slots: **weapon, hat, armor, and shoes**. Hats, arm
 | Swordsman | Sword | Melee damage |
 | Armored Axeman | Axe | Melee damage |
 
+Equipment uses **Iron (tier 1), Gold (tier 2), and Crystal (tier 3)** artwork. Higher tiers cost more and grant stronger bonuses. Selected icons from **Free - Raven Fantasy Icons** appear in the Shop, Gear slots, and inventory choices. Character sprites retain their original built-in weapons and clothing.
+
 ### Progression and recovery
 
-Enemy health and damage increase with the stage. Normal patrols contain four enemies of the same species, while every 25th stage introduces a boss. Victories award gold, every third victory drops equipment, and bosses guarantee an equipment drop.
+Enemy health and damage increase with the stage. Normal patrols contain four enemies of the same species, while every 25th stage introduces a boss. Patrol and boss victories award gold only. All equipment must be purchased from the Shop.
 
 If the party is defeated, it recovers and retries the same stage after a short regrouping period. Enemies also recover to full health. Improve your party to get past a difficult encounter without losing the progress you have already earned.
 
@@ -166,6 +170,7 @@ The visual assets and font come from the following sources. They are obtained se
 | Characters and enemies | [Tiny RPG Character Asset Pack 02](https://zerie.itch.io/tiny-rpg-character-asset-pack-02) | Zerie |
 | Background | [Gothicvania Cold Corridors](https://ansimuz.itch.io/gothicvania-cold-corridors) | Ansimuz |
 | User interface | [Free Medieval Fantasy UI Pack](https://kibyra.itch.io/free-medieval-fantasy-ui-pack) | Kibyra |
+| Equipment icons | [Raven Fantasy Icons](https://clockworkraven.itch.io/raven-fantasy-icons) | Clockwork Raven |
 | Font | [Pixelta](https://www.dafont.com/pixelta.font) | DaFont listing |
 
 The character mappings use the **full 22-character and 20-character packs**. The free sample versions do not cover the complete roster. Consult each creator's asset page and included license for usage terms.
@@ -189,7 +194,7 @@ To start over, use **New Expedition**. To reset manually, close the game and mov
 
 ## Future updates
 
-V1 establishes the core gameplay. The following are potential improvements for later versions, with priorities subject to change. They are not yet implemented or assigned to a release.
+V1.5 builds on the original V1 gameplay with updated equipment and icons. The following are potential improvements for later versions, with priorities subject to change. They are not yet implemented or assigned to a release.
 
 ### Fixes and polish
 
@@ -202,7 +207,7 @@ V1 establishes the core gameplay. The following are potential improvements for l
 
 - Give enemies and bosses distinct skills and attack patterns
 - Add more equipment variety and clearer item comparisons
-- Add dedicated gear and weapon artwork once the assets are supplied. These assets have not been added yet, so equipment currently changes stats without changing character sprites
+- Expand equipment artwork and explore visible gear changes on character sprites. Selected Raven icons are now used in the Shop and Gear tabs
 - Introduce additional environments and encounter variety
 - Add music, sound effects, and volume controls
 - Improve missing-asset messages and setup guidance for new players

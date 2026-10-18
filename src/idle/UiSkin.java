@@ -47,15 +47,16 @@ public final class UiSkin {
         return new ImageIcon(source.getScaledInstance(size, size, Image.SCALE_REPLICATE));
     }
 
-    // choose an equipment icon from its slot or weapon type
-    // the overload with a size is used in tighter inventory rows
+    // show equipment artwork large enough to recognize its material and shape
     public static Icon itemIcon(Catalog.Item item) {
-        return itemIcon(item, 24);
+        return itemIcon(item, 32);
     }
 
-    // choose an equipment icon from its slot or weapon type
-    // the overload with a size is used in tighter inventory rows
+    // use the selected raven artwork in shops, equipped slots, and inventory choices
+    // retain the medieval slot icon if the optional local equipment pack is missing
     public static Icon itemIcon(Catalog.Item item, int size) {
+        BufferedImage source = AssetPack.image(Paths.get("assets", "packs", "Free - Raven Fantasy Icons", "Selected", "fa" + item.iconId() + ".png"));
+        if (source != null) return new ImageIcon(source.getScaledInstance(size, size, Image.SCALE_REPLICATE));
         int id = item.slot == Catalog.Slot.HAT ? 13 : item.slot == Catalog.Slot.ARMOR ? 12 : item.slot == Catalog.Slot.SHOES ? 44 :
             item.weapon == Catalog.Weapon.SWORD ? 9 : item.weapon == Catalog.Weapon.SPEAR ? 56 : item.weapon == Catalog.Weapon.AXE ? 16 : item.weapon == Catalog.Weapon.BOW ? 11 : 25;
         return icon(3, id, size);

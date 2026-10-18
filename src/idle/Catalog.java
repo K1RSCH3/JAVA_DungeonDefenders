@@ -43,6 +43,24 @@ public final class Catalog {
         public final Weapon weapon;
         public final int tier, price;
 
+        // match each tier to a selected raven icon without changing saved equipment ids
+        // silver equipment starts the progression, followed by gold and blue crystal gear
+        public int iconId() {
+            if (slot == Slot.HAT) return new int[] {1905, 1911, 1831}[tier - 1];
+            if (slot == Slot.ARMOR) return new int[] {1921, 1927, 1873}[tier - 1];
+            if (slot == Slot.SHOES) return new int[] {1937, 1943, 2161}[tier - 1];
+            int base;
+            switch (weapon) {
+                case SWORD: base = 1443; break;
+                case SPEAR: base = 1463; break;
+                case AXE: base = 1466; break;
+                case BOW: base = 1514; break;
+                case STAFF: base = 1492; break;
+                default: base = 1494; break;
+            }
+            return base + (tier - 1) * 80;
+        }
+
         // create a gear definition with a stable id, tier, slot, and price
         // items are shared definitions rather than individual inventory copies
         Item(String id, String name, Slot slot, Weapon weapon, int tier) {
@@ -67,13 +85,13 @@ public final class Catalog {
     public static final List<Item> ITEMS;
     static {
         List<Item> items = new ArrayList<>();
-        String[] materials = {"", "Iron", "Runebound", "Eclipse"};
+        String[] materials = {"", "Iron", "Gold", "Crystal"};
         for (int tier = 1; tier <= 3; tier++) {
             for (Weapon weapon : Weapon.values()) {
                 String type = weapon.name().toLowerCase(Locale.ROOT);
                 items.add(new Item(type + "_" + tier, materials[tier] + " " + type, Slot.WEAPON, weapon, tier));
             }
-            items.add(new Item("hat_" + tier, materials[tier] + " hood", Slot.HAT, null, tier));
+            items.add(new Item("hat_" + tier, materials[tier] + " helm", Slot.HAT, null, tier));
             items.add(new Item("armor_" + tier, materials[tier] + " armor", Slot.ARMOR, null, tier));
             items.add(new Item("shoes_" + tier, materials[tier] + " boots", Slot.SHOES, null, tier));
         }

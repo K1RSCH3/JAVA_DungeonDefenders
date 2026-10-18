@@ -79,13 +79,13 @@ public final class GameState {
     public final List<CombatEvent> combatEvents = new ArrayList<>();
 
     // create a new expedition with all recruitable classes in the roster
-    // only the starting four heroes begin recruited, active, and equipped
+    // only the starting four heroes begin recruited and active
+    // equipment is bought in the shop, so new heroes start with empty gear slots
     public GameState() {
         for (Role role : Role.values()) {
             Hero h = new Hero(role);
             if (role == Role.KNIGHT || role == Role.WIZARD || role == Role.PRIEST || role == Role.ARCHER) {
                 h.level = 1; h.active = true;
-                h.gear.put(Slot.WEAPON, Catalog.item(role.weapons.iterator().next().name().toLowerCase(Locale.ROOT) + "_1"));
             }
             h.hp = h.maxHp(); heroes.add(h);
         }
@@ -191,7 +191,7 @@ public final class GameState {
     // this does not equip it, and full stacks or insufficient gold leave the state unchanged
     public boolean buy(Item item) {
         if (gold < item.price || inventory.getOrDefault(item.id, 0) >= 999) return false;
-        gold -= item.price; inventory.merge(item.id, 1, Integer::sum); message = "Forged " + item.name + ". Select a hero to equip it."; return true;
+        gold -= item.price; inventory.merge(item.id, 1, Integer::sum); message = "Bought " + item.name + ". Select a hero to equip it."; return true;
     }
 
     // move an owned, compatible item into a hero's slot
@@ -252,11 +252,7 @@ public final class GameState {
         if (enemyHp <= 0) {
             String defeated = Encounters.title(stage); addGold(reward()); kills++;
             message = defeated + " defeated. +" + (int) reward() + " gold.";
-            if (boss() || kills % 3 == 0) {
-                int tier = Math.min(3, 1 + stage / 20);
-                Item drop = Catalog.ITEMS.get((tier - 1) * 9 + Math.max(0, kills / 3 - 1) % 9);
-                inventory.merge(drop.id, 1, (a, b) -> Math.min(999, a + b)); message += " Found " + drop.name + "!";
-            }
+            // victories award gold only, leaving all new equipment purchases to the shop
             stage = Math.min(MAX_STAGE, stage + 1); enemyHp = enemyMaxHp();
             heroes.stream().filter(Hero::alive).forEach(h -> h.hp = Math.min(h.maxHp(), h.hp + h.maxHp() * .12));
             return;

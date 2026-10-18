@@ -19,12 +19,34 @@ public final class GameStateTest {
     // tests use this to target a particular hero without repeating lookup code
     private static Hero hero(GameState s, Role role) { return s.heroes.get(role.ordinal()); }
 
+    // verify selected artwork exists and stronger materials improve real hero stats
+    // saved item ids must still resolve while each slot keeps its own tier progression
+    private static void checkEquipmentTiers() throws Exception {
+        java.util.Set<Integer> icons = new java.util.HashSet<>();
+        for (Item item : Catalog.ITEMS) {
+            check(icons.add(item.iconId()), "Distinct equipment artwork: " + item.id);
+            BufferedImage icon = ImageIO.read(Paths.get("assets", "packs", "Free - Raven Fantasy Icons", "Selected", "fa" + item.iconId() + ".png").toFile());
+            check(icon != null && icon.getWidth() == 16 && icon.getHeight() == 16, "Raven icon: " + item.id);
+            if (item.tier == 1) continue;
+            Item previous = Catalog.item(item.id.substring(0, item.id.lastIndexOf('_') + 1) + (item.tier - 1));
+            Hero lower = new Hero(Role.KNIGHT), higher = new Hero(Role.KNIGHT);
+            lower.level = higher.level = 1;
+            lower.gear.put(item.slot, previous); higher.gear.put(item.slot, item);
+            check(item.price > previous.price, "Higher tier price: " + item.id);
+            check(item.slot == Slot.WEAPON ? higher.power() > lower.power() : higher.maxHp() > lower.maxHp(), "Higher tier stats: " + item.id);
+            if (item.slot == Slot.ARMOR) check(higher.guard() > lower.guard(), "Armor guard improves");
+            if (item.slot == Slot.HAT || item.slot == Slot.SHOES) check(higher.power() > lower.power(), "Equipment power improves");
+        }
+    }
+
     // run gameplay, save, asset, and ui checks using isolated data
     // also render previews so layout changes can be reviewed without altering the player's campaign
     public static void main(String[] args) throws Exception {
         GameState s = new GameState();
         check(s.heroes.size() == 9 && s.activeCount() == 4, "Playable roster and party cap");
         check(Catalog.ENEMIES.length == 33, "Complete enemy roster");
+        checkEquipmentTiers();
+        check(s.inventory.isEmpty() && s.heroes.stream().allMatch(h -> h.gear.isEmpty()), "New campaign has no free equipment");
         s.gold = 10000;
         Hero knight = hero(s, Role.KNIGHT), wizard = hero(s, Role.WIZARD), lancer = hero(s, Role.LANCER);
         check(s.train(lancer) && !s.toggle(lancer), "Cannot deploy fifth member");
@@ -32,6 +54,7 @@ public final class GameStateTest {
         Item sword = Catalog.item("sword_2"), staff = Catalog.item("staff_2"), hat = Catalog.item("hat_1");
         check(s.buy(sword), "Purchase weapon");
         check(!s.equip(wizard, sword) && !s.equip(lancer, sword), "Sword class restriction");
+        check(s.buy(Catalog.item("sword_1")) && s.equip(knight, Catalog.item("sword_1")), "Buy and equip initial weapon");
         double power = knight.power();
         check(s.equip(knight, sword) && knight.power() > power, "Sword raises power");
         check(s.inventory.get("sword_1") == 1 && s.inventory.get("sword_2") == 0, "Swap returns old item to stash");
@@ -51,7 +74,7 @@ public final class GameStateTest {
         check(battle.lastHealing > 0 && hero(battle, Role.KNIGHT).hp > 25, "Priest heals wounded tank");
         battle.stage = 24; battle.enemyHp = 1; battle.tick(); check(battle.stage == 25 && battle.boss(), "Boss transition");
         battle.enemyHp = 1; double gold = battle.gold; battle.tick(); check(battle.gold - gold == 445, "Boss reward");
-        battle.enemyHp = 1; battle.tick(); check(!battle.inventory.isEmpty(), "Third victory drops loot");
+        battle.enemyHp = 1; battle.tick(); check(battle.kills == 3 && battle.inventory.isEmpty(), "Patrol and boss victories never grant equipment");
         int stalledStage = battle.stage; double savedGold = battle.gold;
         battle.heroes.forEach(h -> h.hp = 0); battle.tick(); check(battle.rest == 5, "Defeat enters rest");
         check(battle.stage == stalledStage && battle.gold == savedGold && battle.enemyHp == battle.enemyMaxHp(), "Failed attempt preserves stage and gold, resets enemies");

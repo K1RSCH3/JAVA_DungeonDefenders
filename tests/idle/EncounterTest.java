@@ -135,7 +135,7 @@ public final class EncounterTest {
         check(effects.combatEvents.stream().anyMatch(e -> !e.healing && !e.incoming && e.enemy == 1), "Spillover effect follows next target");
         effects.rest = 1; effects.tick(); check(effects.combatEvents.isEmpty(), "Rest clears stale effects");
         GameState boss = new GameState(); boss.stage = 25; boss.enemyHp = 1; boss.tick();
-        check(boss.stage == 26 && boss.gold == 565 && !boss.inventory.isEmpty(), "Boss rewards and guaranteed loot");
+        check(boss.stage == 26 && boss.gold == 565 && boss.inventory.isEmpty(), "Boss awards gold without equipment");
         Path dir = Files.createTempDirectory("dungeon-encounters-"); Path file = dir.resolve("save.properties");
         try (SaveStore saves = new SaveStore(file)) {
             saves.save(upgrades);
