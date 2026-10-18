@@ -40,8 +40,11 @@ public final class SaveStore implements AutoCloseable {
             s.stage = integer(p, "stage", 1, GameState.MAX_STAGE);
             s.gold = number(p, "gold", 0, GameState.MAX_GOLD);
             double oldMax = "1".equals(version) ? (45 + s.stage * 20.0) * (s.stage % 10 == 0 ? 2.5 : 1) : s.enemyMaxHp();
+            // preserve the remaining health fraction when loading the former first-boss balance
+            boolean oldBossBalance = !"1".equals(version) && s.stage == 25 && !"2".equals(p.getProperty("combatBalance"));
+            if (oldBossBalance) oldMax = (45 + s.stage * 20.0) * 4;
             double savedHp = number(p, "enemyHp", .001, oldMax);
-            s.enemyHp = "1".equals(version) ? Math.max(.001, Math.min(s.enemyMaxHp(), savedHp / oldMax * s.enemyMaxHp())) : savedHp;
+            s.enemyHp = "1".equals(version) || oldBossBalance ? Math.max(.001, Math.min(s.enemyMaxHp(), savedHp / oldMax * s.enemyMaxHp())) : savedHp;
             s.kills = integer(p, "kills", 0, Integer.MAX_VALUE);
             s.ticks = integer(p, "ticks", 0, 999999); s.rest = integer(p, "rest", 0, 5);
             s.savedAt = Long.parseLong(p.getProperty("savedAt"));
@@ -102,6 +105,7 @@ public final class SaveStore implements AutoCloseable {
     public void save(GameState s) throws IOException {
         Properties p = new Properties();
         p.setProperty("campaignName", s.campaignName);
+        p.setProperty("combatBalance", "2");
         p.setProperty("version", "4"); p.setProperty("stage", "" + s.stage); p.setProperty("gold", "" + s.gold);
         p.setProperty("enemyHp", "" + s.enemyHp); p.setProperty("kills", "" + s.kills);
         p.setProperty("ticks", "" + s.ticks); p.setProperty("rest", "" + s.rest);

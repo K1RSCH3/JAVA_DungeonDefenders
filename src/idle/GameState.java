@@ -175,7 +175,7 @@ public final class GameState {
 
     // calculate the health budget for any stage, including the boss multiplier
     // rendering can use an old stage while its final enemies are still dying
-    public static double encounterMaxHp(int stage) { return (45 + stage * 20.0) * (Encounters.boss(stage) ? 4 : 1); }
+    public static double encounterMaxHp(int stage) { return (45 + stage * 20.0) * (stage == 25 ? 2 : Encounters.boss(stage) ? 4 : 1); }
 
     // get the current encounter's full health budget
     // retry and new-stage setup use this to reset enemies
@@ -184,7 +184,7 @@ public final class GameState {
     /** base damage per living enemy. boss heavy strikes are applied separately */
     // calculate one living enemy's base strike before guard and boss heavy attacks
     // later stages deal more damage
-    public double enemyStrikeDamage() { return (5 + stage * 1.7) * (boss() ? 1.5 : .25); }
+    public double enemyStrikeDamage() { return (5 + stage * 1.7) * (stage == 25 ? .65 : boss() ? 1.5 : .25); }
 
     // calculate gold for clearing this stage
     // boss victories receive a larger payout than ordinary patrols
@@ -316,7 +316,7 @@ public final class GameState {
         Hero target = heroes.stream().filter(Hero::alive).min(Comparator.comparingInt(h ->
             h.role == Role.KNIGHT || h.role == Role.KNIGHT_TEMPLAR ? 0 : h.role == Role.PRIEST ? 3 : h.role == Role.WIZARD || h.role == Role.ARCHER ? 2 : 1)).orElse(null);
         double strike = enemyStrikeDamage();
-        if (boss() && ticks % 5 == 0) { strike *= 1.7; message = Encounters.title(stage) + " unleashes a crushing blow!"; }
+        if (boss() && ticks % 5 == 0) { strike *= stage == 25 ? 1.3 : 1.7; message = Encounters.title(stage) + " unleashes a crushing blow!"; }
         if (target != null) {
             double applied = Math.min(target.hp, Math.max(.25, strike - target.guard() / (boss() ? 1 : 4)));
             target.hp -= applied;

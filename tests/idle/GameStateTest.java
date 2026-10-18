@@ -88,6 +88,18 @@ public final class GameStateTest {
         for (int i = 0; i < 250; i++) wall.tick();
         check(wall.stage == 995 && wall.kills == 0 && wall.gold == 120 && wall.inventory.isEmpty(), "Underpowered boss party retreats once without earning victory rewards");
         GameState scaling = new GameState(); scaling.stage = 10;
+        // the introductory boss should reward modest preparation without requiring late-tier equipment
+        GameState introduction = new GameState(); introduction.stage = 25; introduction.enemyHp = introduction.enemyMaxHp();
+        check(introduction.enemyMaxHp() == 1090 && introduction.enemyStrikeDamage() < 31, "Introductory boss has gentler health and damage");
+        for (Hero h : introduction.heroes) if (h.active) {
+            h.upgrades.put(GameState.Upgrade.ATTACK, 2); h.upgrades.put(GameState.Upgrade.HEALTH, 2);
+            h.upgrades.put(GameState.Upgrade.GUARD, 2);
+            if (h.role == Role.PRIEST) h.upgrades.put(GameState.Upgrade.HEALING, 2);
+            for (Item item : Catalog.ITEMS) if (item.tier == 1 && h.role.accepts(item)) h.gear.put(item.slot, item);
+            h.hp = h.maxHp();
+        }
+        for (int i = 0; i < 100 && introduction.stage == 25; i++) introduction.tick();
+        check(introduction.stage == 26, "Iron gear and rank-two upgrades can defeat the first boss");
         double earlyHp = scaling.enemyMaxHp(), earlyDamage = scaling.enemyStrikeDamage(); scaling.stage = 20;
         check(scaling.enemyMaxHp() > earlyHp && scaling.enemyStrikeDamage() > earlyDamage, "Normal HP and damage grow with stage");
         scaling.stage = 25; earlyHp = scaling.enemyMaxHp(); earlyDamage = scaling.enemyStrikeDamage(); scaling.stage = 50;

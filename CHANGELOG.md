@@ -35,6 +35,9 @@ Equipment, audio, camp recovery, and guidance update, recorded on October 19, 20
 
 ### Interface and checks
 
+- Added a portrait hero selector available on every management tab, distinct page headings, framed equipment/stat cards, and a compatible-equipment Shop filter
+- Reduced stage 25 boss HP from 2,180 to 1,090, base damage from 71.25 to 30.875, and the heavy-hit multiplier from 1.7 to 1.3
+- Preserved existing first-boss save health percentages and verified a starting party with Iron gear and rank-two upgrades can clear the encounter
 - Changed recruitment, shopping, and equipment guides into action-driven sequences with next-control highlights and dismissal at every step
 - Added regrouping guidance for ready replacements, recovery countdowns, full-party swaps, and manual redeployment, including empty-party saves
 - Guided players back to hidden management controls and added regression checks for navigation, recruitment, deployment, recovery, and dismissal

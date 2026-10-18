@@ -39,6 +39,9 @@ public final class IdleGame {
     private final JList<Item> shop = new JList<>(Catalog.ITEMS.toArray(new Item[0]));
     private final BattlePanel battlefield;
     private Hero selected;
+    private final JComboBox<Role> heroPicker = new JComboBox<>(Role.values());
+    private final JLabel pageHeading = new JLabel();
+    private final JCheckBox compatibleOnly = new JCheckBox("Only gear this hero can use", true);
     private JFrame window;
     private String bagSignature = "";
     private int seconds;
@@ -193,9 +196,9 @@ public final class IdleGame {
 
         // keep the wallet, selected portrait, and management actions together
         // this avoids sending the player to a separate screen just to compare a price with their gold
-        JPanel sidebar = UiSkin.panel(new BorderLayout(0, 16)); sidebar.setPreferredSize(new Dimension(420, 660));
+        JPanel sidebar = UiSkin.panel(new BorderLayout(0, 10)); sidebar.setPreferredSize(new Dimension(420, 660));
         sidebar.setBorder(new EmptyBorder(24, 24, 24, 24));
-        JPanel character = panel(new BorderLayout(0, 14));
+        JPanel character = panel(new BorderLayout(0, 8));
         JPanel details = panel(null); details.setLayout(new BoxLayout(details, BoxLayout.Y_AXIS));
         heroTitle.setForeground(GOLD); heroTitle.setFont(font(19)); details.add(heroTitle);
         heroStats.setForeground(TEXT); details.add(heroStats); weaponRule.setForeground(MUTED); weaponRule.setFont(font(10)); details.add(weaponRule);
@@ -211,13 +214,27 @@ public final class IdleGame {
                 UiSkin.draw(g, "selection", 0, 0, getWidth(), getHeight(), false); g.dispose();
             }
         };
-        portrait.setPreferredSize(new Dimension(100, 90)); portrait.setOpaque(false);
+        portrait.setPreferredSize(new Dimension(80, 64)); portrait.setOpaque(false);
         JPanel identity = panel(new BorderLayout(12, 0)); identity.add(portrait, BorderLayout.WEST); identity.add(details, BorderLayout.CENTER);
         character.add(identity, BorderLayout.CENTER);
         JPanel wallet = UiSkin.panel(new BorderLayout(8, 0)); wallet.setBorder(new EmptyBorder(10, 12, 10, 12));
         resources.setIconTextGap(8); wallet.add(resources, BorderLayout.WEST);
         partyCount.setForeground(TEXT); partyCount.setFont(font(18)); partyCount.setIcon(UiSkin.icon(2, 20, 24)); wallet.add(partyCount, BorderLayout.EAST);
-        character.add(wallet, BorderLayout.NORTH);
+        JPanel selection = panel(new BorderLayout(0, 8)); selection.add(wallet, BorderLayout.NORTH);
+        heroPicker.setFont(font(18)); heroPicker.setSelectedItem(selected.role);
+        heroPicker.setRenderer(new DefaultListCellRenderer() {
+            // keep hero switching available above every tab with recognizable portraits and recruitment status
+            @Override public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean selectedRow, boolean focus) {
+                JLabel cell = (JLabel) super.getListCellRendererComponent(list, value, index, selectedRow, focus);
+                Role role = (Role) value;
+                if (role != null) { cell.setText(role.label + (state.heroes.get(role.ordinal()).level == 0 ? " / Not recruited" : "")); cell.setIcon(new ImageIcon(PixelArt.portrait(role))); }
+                return cell;
+            }
+        });
+        heroPicker.setToolTipText("Choose the hero to equip or upgrade without leaving this tab");
+        heroPicker.getAccessibleContext().setAccessibleName("Selected hero");
+        heroPicker.addActionListener(e -> { Role role = (Role) heroPicker.getSelectedItem(); if (role != null && selected.role != role) roster[role.ordinal()].doClick(); });
+        selection.add(heroPicker); character.add(selection, BorderLayout.NORTH);
         heroActions.add(deploy); character.add(heroActions, BorderLayout.SOUTH);
 
         tabs.setUI(new UiSkin.SkinTabs() {
@@ -238,7 +255,7 @@ public final class IdleGame {
         tabs.addTab("Party", rosterBlock);
         JPanel gear = panel(new GridLayout(4, 1, 0, 12)); gear.setBorder(new EmptyBorder(14, 10, 12, 10));
         for (Slot slot : Slot.values()) {
-            int i = slot.ordinal(); JPanel row = panel(new GridLayout(0, 1, 0, 5));
+            int i = slot.ordinal(); JPanel row = UiSkin.panel(new GridLayout(0, 1, 0, 6)); row.setBorder(new EmptyBorder(12, 12, 12, 12));
             equipped[i] = label("", GOLD, 11); row.add(equipped[i]); choices[i] = new JComboBox<>(); choices[i].setFont(font(11));
             choices[i].setRenderer(new DefaultListCellRenderer() {
                 // build a readable item row for the current inventory or shop context
@@ -255,11 +272,13 @@ public final class IdleGame {
             remove[i].addActionListener(e -> change(() -> state.unequip(selected, slot)));
             buttons.add(equip[i]); buttons.add(remove[i]); row.add(buttons); gear.add(row);
         }
-        gear.setPreferredSize(new Dimension(330, 440));
+        gear.setPreferredSize(new Dimension(330, 600));
         JScrollPane gearScroll = new JScrollPane(gear); gearScroll.getViewport().setBackground(PANEL); gearScroll.getVerticalScrollBar().setUnitIncrement(24);
         tabs.addTab("Gear", gearScroll);
         JPanel forge = panel(new BorderLayout(0, 10)); forge.setBorder(new EmptyBorder(12, 10, 12, 10));
-        forge.add(label("Buy gear here, then equip it in Gear", MUTED, 11), BorderLayout.NORTH);
+        compatibleOnly.setOpaque(false); compatibleOnly.setForeground(TEXT); compatibleOnly.setFont(font(18));
+        compatibleOnly.addActionListener(e -> filterShop());
+        forge.add(compatibleOnly, BorderLayout.NORTH);
         shop.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         shop.setCellRenderer(new DefaultListCellRenderer() {
             // build a readable item row for the current inventory or shop context
@@ -277,14 +296,14 @@ public final class IdleGame {
         JPanel training = panel(new GridLayout(4, 1, 0, 10)); training.setBorder(new EmptyBorder(14, 8, 8, 8));
         for (GameState.Upgrade upgrade : GameState.Upgrade.values()) {
             int i = upgrade.ordinal();
-            JPanel row = panel(new BorderLayout(0, 6));
+            JPanel row = UiSkin.panel(new BorderLayout(0, 8)); row.setBorder(new EmptyBorder(12, 12, 12, 12));
             upgradeLabels[i] = label("", GOLD, 18); row.add(upgradeLabels[i], BorderLayout.CENTER);
             upgradeButtons[i] = button("Upgrade");
             upgradeButtons[i].setIcon(UiSkin.icon(3, upgrade == GameState.Upgrade.HEALTH ? 1 : upgrade == GameState.Upgrade.HEALING ? 15 : upgrade == GameState.Upgrade.GUARD ? 12 : 9, 22));
             upgradeButtons[i].addActionListener(e -> change(() -> state.upgrade(selected, upgrade)));
             row.add(upgradeButtons[i], BorderLayout.SOUTH); training.add(row);
         }
-        training.setPreferredSize(new Dimension(330, 450));
+        training.setPreferredSize(new Dimension(330, 560));
         JScrollPane trainingScroll = new JScrollPane(training); trainingScroll.getViewport().setBackground(PANEL); trainingScroll.getVerticalScrollBar().setUnitIncrement(24);
         tabs.addTab("Upgrades", trainingScroll);
 
@@ -293,10 +312,12 @@ public final class IdleGame {
         JPanel navigation = panel(new GridLayout(2, 2, 8, 8));
 
         int[] navigationIcons = {20, 12, 38, 35};
+        String[] navigationHelp = {"PARTY / Recruit heroes and manage active slots", "GEAR / Equip items you already own", "SHOP / Buy new equipment with gold", "UPGRADES / Permanently improve this hero's stats"};
         for (int i = 0; i < 4; i++) {
             final int tabIndex = i;
             JButton nav = button(tabs.getTitleAt(i)); navigationButtons[i] = nav;
             nav.setIcon(UiSkin.icon(i == 0 ? 2 : 3, navigationIcons[i], 24));
+            nav.setToolTipText(navigationHelp[i]);
             nav.addActionListener(e -> { tabs.setSelectedIndex(tabIndex); if (tabIndex == 2 && guidedItem == null && guidedRecruit == null) { shopGuide = true; guide("Shop"); refreshGuide(); } });
             nav.putClientProperty("selectedHero", i == 0); navigation.add(nav);
         }
@@ -304,7 +325,11 @@ public final class IdleGame {
             for (int i = 0; i < 4; i++) { navigationButtons[i].putClientProperty("selectedHero", tabs.getSelectedIndex() == i); navigationButtons[i].repaint(); }
             refreshGuide();
         });
-        JPanel management = panel(new BorderLayout(0, 8)); management.add(navigation, BorderLayout.NORTH); management.add(tabs, BorderLayout.CENTER);
+        JPanel management = panel(new BorderLayout(0, 8));
+        JPanel navigationArea = panel(new BorderLayout(0, 10)); navigationArea.add(navigation, BorderLayout.NORTH);
+        pageHeading.setForeground(GOLD); pageHeading.setFont(font(18)); navigationArea.add(pageHeading);
+        management.add(navigationArea, BorderLayout.NORTH); management.add(tabs, BorderLayout.CENTER);
+        tabs.addChangeListener(e -> updatePageHeading());
         sidebar.add(management, BorderLayout.CENTER);
         JLabel guide = label("", MUTED, 11);
         String[] hints = {"<html>Up to 4 heroes fight at once.<br>Recruited heroes can wait at camp.</html>", "<html>Only owned, compatible gear is listed.<br>Replaced items return to your inventory.</html>", "<html>Purchases go to shared inventory.<br>Buying an item does not equip it.</html>", "<html>Each upgrade is bought separately.<br>Gold is shared by all heroes.</html>"};
@@ -370,9 +395,33 @@ public final class IdleGame {
         buy.setText(item == null ? "Select an item" : (state.gold < item.price ? "Need " + (int) Math.ceil(item.price - state.gold) + " more gold" : "Buy for " + item.price + " gold"));
     }
 
+    // explain the current page in terms of what the player can do and who receives the change
+    private void updatePageHeading() {
+        String[] titles = {"PARTY / Recruit & deploy", "GEAR / Equip owned items", "SHOP / Buy new items", "STATS / Permanent upgrades"};
+        int page = Math.max(0, tabs.getSelectedIndex());
+        pageHeading.setText(titles[page]);
+    }
+
+    // narrow shop choices to useful gear while preserving a selected item whenever possible
+    // the checkbox lets players browse equipment for other classes without changing their party
+    private void filterShop() {
+        java.util.List<Item> items = new java.util.ArrayList<>();
+        for (Item item : Catalog.ITEMS) if (!compatibleOnly.isSelected() || selected.role.accepts(item)) items.add(item);
+        boolean same = shop.getModel().getSize() == items.size();
+        for (int i = 0; same && i < items.size(); i++) same = shop.getModel().getElementAt(i) == items.get(i);
+        if (same) return;
+        Item previous = shop.getSelectedValue();
+        shop.setListData(items.toArray(new Item[0]));
+        if (items.contains(previous)) shop.setSelectedValue(previous, true);
+        else if (!items.isEmpty()) shop.setSelectedIndex(0);
+    }
+
     // refresh hero details, party status, upgrade previews, and gear choices from the state
     // preserve a compatible inventory selection instead of rebuilding it unnecessarily
     private void refresh() {
+        heroPicker.setSelectedItem(selected.role);
+        updatePageHeading();
+        filterShop();
         resources.setText(new DecimalFormat("#,##0").format(state.gold) + " gold");
         partyCount.setText(state.activeCount() + "/4 party");
         stage.setText("EXPEDITION " + String.format("%03d", state.stage) + " / " + Encounters.title(state.stage) + " / " + (int) state.enemyHp + " HP");

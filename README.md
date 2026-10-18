@@ -157,6 +157,8 @@ The gear-shaped options button on the **left of each save card** offers **Rename
 
 Use the management panel beside the battlefield:
 
+The portrait dropdown above the tabs switches the selected hero from any page. **Party** manages who fights, **Gear** equips owned items, **Shop** buys items, and **Upgrades** permanently increases hero stats. Each page has a distinct heading, and equipment slots and stat upgrades use separate framed cards. The Shop defaults to equipment the selected hero can use. Uncheck **Only gear this hero can use** to browse all classes.
+
 | Tab | What to do |
 | --- | --- |
 | **Party** | Select a hero, recruit another class, or swap members between camp and your active party |
@@ -189,6 +191,8 @@ Equipment uses **Iron (tier 1), Gold (tier 2), and Crystal (tier 3)** artwork. H
 ### Progression and recovery
 
 Enemy health and damage increase with the stage. Normal patrols contain four enemies of the same species, while every 25th stage introduces a boss. Patrol and boss victories award gold only. All equipment must be purchased from the Shop.
+
+The first boss at stage 25 has a gentler introductory balance: 1,090 HP, reduced attack damage, and a smaller heavy-hit bonus. Iron equipment and early stat upgrades are enough for a prepared starting party to win. Later bosses retain their existing scaling. Existing first-boss saves preserve their remaining HP percentage when loaded with the revised balance.
 
 A downed hero is automatically sent to camp and frees a party slot. Camp recovery takes **30 seconds**, gradually restores HP, and continues while the game is closed. Injured heroes you manually send to camp also recover there. Recovering heroes cannot be deployed until their countdown finishes.
 
