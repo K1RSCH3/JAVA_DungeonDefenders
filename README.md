@@ -39,6 +39,8 @@ Weapon restrictions still apply, and equipped gear changes stats rather than cha
 
 Current **1.5.0** interface previews rendered from the game with isolated demo campaigns. Gold, stages, and party selections vary between examples. These are composed game screenshots, not downloadable asset sheets.
 
+Screenshots refreshed **October 21, 2026**, showing the simplified menu, cleaned-up gameplay text, hero selector, and current step-by-step guides.
+
 ### Main menu
 
 Choose **Play** to open the expedition library, or access Settings, Credits, and Quit Game.
@@ -62,7 +64,7 @@ The sidebar keeps gold, the selected hero, and management tabs together. This pa
 
 Downed heroes leave their party slot and recover at camp over 30 seconds. The selected Knight is healing with 22 seconds remaining, while three allies continue fighting. Add a ready recruit or recovered hero manually through Party.
 
-![Knight recovering at camp with a countdown and rescue notice](docs/screenshots/camp-recovery.png)
+![Knight recovering at camp with a countdown and dismissible party guide](docs/screenshots/camp-recovery.png)
 
 </details>
 

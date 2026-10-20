@@ -174,8 +174,7 @@ public final class IdleGame {
         JPanel scene = panel(new BorderLayout());
         stage.setForeground(TEXT); stage.setBorder(new EmptyBorder(0, 0, 10, 0)); scene.add(stage, BorderLayout.NORTH);
         battlefield = new BattlePanel(state); scene.add(battlefield, BorderLayout.CENTER);
-        JLabel tip = label("AUTO BATTLE / Four-enemy patrols / Boss every 25 stages", MUTED, 11);
-        tip.setBorder(new EmptyBorder(10, 0, 0, 0)); scene.add(tip, BorderLayout.SOUTH); left.add(scene, BorderLayout.CENTER);
+        left.add(scene, BorderLayout.CENTER);
         JPanel rosterBlock = panel(new BorderLayout(0, 9));
         rosterBlock.setBorder(new EmptyBorder(14, 2, 2, 2));
         JPanel rosterHeading = panel(new GridLayout(2, 1, 0, 5));
@@ -331,13 +330,9 @@ public final class IdleGame {
         management.add(navigationArea, BorderLayout.NORTH); management.add(tabs, BorderLayout.CENTER);
         tabs.addChangeListener(e -> updatePageHeading());
         sidebar.add(management, BorderLayout.CENTER);
-        JLabel guide = label("", MUTED, 11);
-        String[] hints = {"<html>Up to 4 heroes fight at once.<br>Recruited heroes can wait at camp.</html>", "<html>Only owned, compatible gear is listed.<br>Replaced items return to your inventory.</html>", "<html>Purchases go to shared inventory.<br>Buying an item does not equip it.</html>", "<html>Each upgrade is bought separately.<br>Gold is shared by all heroes.</html>"};
-        guide.setText(hints[0]); tabs.addChangeListener(e -> guide.setText(hints[tabs.getSelectedIndex()]));
-        guide.setBorder(new EmptyBorder(4, 6, 2, 6)); sidebar.add(guide, BorderLayout.SOUTH);
         body.add(sidebar, BorderLayout.EAST); root.add(body, BorderLayout.CENTER);
         expand.addActionListener(e -> { sidebar.setVisible(!sidebar.isVisible()); expand.setText(sidebar.isVisible() ? "Expand battlefield" : "Show party & gear"); refreshGuide(); body.revalidate(); body.repaint(); });
-        JPanel footer = panel(new BorderLayout(10, 0)); event.setForeground(GOLD); event.setFont(font(11)); footer.add(event, BorderLayout.CENTER);
+        JPanel footer = panel(new BorderLayout(10, 0));
         saveStatus.setForeground(MUTED); saveStatus.setFont(font(10)); footer.add(saveStatus, BorderLayout.EAST); root.add(footer, BorderLayout.SOUTH);
         if (state.activeCount() == 0) { recoveryGuide = true; guide("Regrouping"); }
         refresh();
@@ -397,7 +392,7 @@ public final class IdleGame {
 
     // explain the current page in terms of what the player can do and who receives the change
     private void updatePageHeading() {
-        String[] titles = {"PARTY / Recruit & deploy", "GEAR / Equip owned items", "SHOP / Buy new items", "STATS / Permanent upgrades"};
+        String[] titles = {"PARTY", "GEAR", "SHOP", "STATS"};
         int page = Math.max(0, tabs.getSelectedIndex());
         pageHeading.setText(titles[page]);
     }
@@ -424,7 +419,7 @@ public final class IdleGame {
         filterShop();
         resources.setText(new DecimalFormat("#,##0").format(state.gold) + " gold");
         partyCount.setText(state.activeCount() + "/4 party");
-        stage.setText("EXPEDITION " + String.format("%03d", state.stage) + " / " + Encounters.title(state.stage) + " / " + (int) state.enemyHp + " HP");
+        stage.setText("EXPEDITION " + String.format("%03d", state.stage));
         for (Hero h : state.heroes) {
             JButton card = roster[h.role.ordinal()];
             card.setText("<html>" + h.role.label + "<br>" + roleDescription(h.role) + "<br>" + (h.level == 0 ? "Not recruited / " + (int) state.levelCost(h) + " gold" : h.active ? (h.hp > 0 ? "In party" : "In party / Knocked out") : h.recoverySeconds > 0 ? "Recovering / " + h.recoverySeconds + "s" : "At camp / Ready") + "</html>");

@@ -23,7 +23,7 @@ public final class MainMenu {
     private boolean reducedMotion, damageNumbers = true;
     private final GameAudio audio = Boolean.getBoolean("dungeon.audio.disabled") ? null : new GameAudio();
     private int musicVolume = 35, effectsVolume = 55;
-    private final JLabel status = new JLabel("Gather your defenders. Keep the darkness at bay.", SwingConstants.CENTER);
+    private final JLabel status = new JLabel("", SwingConstants.CENTER);
 
     // connect the menu to its window, save store, and settings paths
     // the path-taking version lets tests use temporary files without touching player data
@@ -88,10 +88,10 @@ public final class MainMenu {
         card.add(Box.createVerticalStrut(26));
         card.add(action("Play", () -> { choosingCampaign = true; show(); }));
         card.add(Box.createVerticalStrut(10)); card.add(action("Settings", this::settings));
-        card.add(Box.createVerticalStrut(10)); card.add(action("Credits", () -> information("Chronicle & Credits", "<b>Dungeon Defenders</b><br>A Java desktop idle RPG.<br><br><b>Character art</b><br>Tiny RPG Character Asset Packs 01 and 02.<br><br><b>Equipment icons</b><br>Free - Raven Fantasy Icons.<br><br><b>Audio</b><br>NimbeKit Fantasy RPG SFX 160.<br>Procedural dungeon and boss music.<br><br><b>Environment</b><br>Cold Corridors background and torch assets.<br><br><b>Interface and font</b><br>Pixelta (bundled font).<br>Free Medieval Fantasy UI Pack by Kibyra.<br>Wood, iron, parchment, and interface icons.<br><br>Original pack files and included license documents<br>are preserved under assets/packs/.")));
+        card.add(Box.createVerticalStrut(10)); card.add(action("Credits", () -> information("Chronicle & Credits", "<b>Dungeon Defenders</b><br>A Java desktop idle RPG.<br><br><b>Character art</b><br>Tiny RPG Character Asset Packs 01 and 02.<br><br><b>Equipment icons</b><br>Free - Raven Fantasy Icons.<br><br><b>Audio</b><br>NimbeKit Fantasy RPG SFX 160.<br>Dungeon and boss music.<br><br><b>Environment</b><br>Cold Corridors background and torch assets.<br><br><b>Interface and font</b><br>Pixelta (bundled font).<br>Free Medieval Fantasy UI Pack by Kibyra.<br>Wood, iron, parchment, and interface icons.<br><br>Original pack files and included license documents<br>are preserved under assets/packs/.")));
         card.add(Box.createVerticalStrut(10)); card.add(action("Quit Game", this::quit));
-        card.add(Box.createVerticalStrut(22)); status.setForeground(new Color(0xc3bdaf)); status.setFont(UiSkin.font(16)); status.setAlignmentX(.5f); card.add(status);
-        card.add(Box.createVerticalStrut(10)); addLabel(card, "Progress saves automatically during expeditions", 13, false);
+        status.setForeground(new Color(0xc3bdaf)); status.setFont(UiSkin.font(16)); status.setAlignmentX(.5f);
+        if (!status.getText().isEmpty()) { card.add(Box.createVerticalStrut(16)); card.add(status); }
         background.add(card); return background;
     }
 
@@ -254,7 +254,7 @@ public final class MainMenu {
     void returnToMenu() {
         if (game != null && !game.saveAndStop()) { information("Save failed", "Could not save progress. The expedition is still running; try again."); return; }
         closeActiveSave(); choosingCampaign = false;
-        status.setText("Your expedition is saved. Rest awhile, defender."); show();
+        status.setText("Expedition saved."); show();
     }
 
     // edit and save display preferences after the player confirms them
